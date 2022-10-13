@@ -302,7 +302,8 @@ class TetrisEnvironment:
         self.__current_position[1] -= 1
 
         # Update game board
-        self.__board = self.add_piece_to_the_board(self._get_rotated_piece(), self.__current_position)
+        piece = self._get_rotated_piece()
+        self.__board = self.add_piece_to_the_board(piece, self.__current_position)
         cleared_lines, self.__board = self.clear_lines(self.__board)
 
         # Compute score
@@ -317,10 +318,10 @@ class TetrisEnvironment:
         return score, self.__game_over
 
     def render(self):
-        '''Renders the current board'''
+        """Renders the current board"""
         img = [COLORS[p] for row in self._get_complete_board() for p in row]
         img = np.array(img).reshape(BOARD_HEIGHT, BOARD_WIDTH, 3).astype(np.uint8)
-        img = img[..., ::-1] # Convert RRG to BGR (used by cv2)
+        img = img[..., ::-1]  # Convert RRG to BGR (used by cv2)
         img = Image.fromarray(img, 'RGB')
         img = img.resize((BOARD_WIDTH * 25, BOARD_HEIGHT * 25))
         img = np.array(img)

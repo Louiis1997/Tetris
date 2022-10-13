@@ -7,7 +7,7 @@ if __name__ == '__main__':
     render_every = 50
     episodes = 1
     max_steps = None
-    render_delay = None
+    render_delay = 0.01
 
     agent = TetrisAgent(env, env.get_state_size())  # TODO: more variables
 
@@ -28,17 +28,17 @@ if __name__ == '__main__':
             next_states = env.get_next_states()
             best_state = agent.best_state(next_states.values())  # TODO
 
-            best_action = None
-            for action, state in next_states.items():
-                if state == best_state:
-                    best_action = action
-                    break
+            best_action = (int(BOARD_WIDTH / 2) - 2, 0)
 
             reward, done = env.do(best_action[0], best_action[1], render=render,
                                   render_delay=render_delay)
 
             # agent.add_to_memory(current_state, next_states[best_action], reward, done) # TODO
+            if done:
+                print("Episode finished after {} timesteps".format(steps + 1))
+                break
             current_state = next_states[best_action]
             steps += 1
 
         scores.append(env.score)
+        print("Episode {} finished with score {}, timesteps {}".format(episode, env.score, steps))
