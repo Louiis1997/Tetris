@@ -78,6 +78,7 @@ class Agent:
         self.__environment.print_board()
 
         if self.safe_move_down(current_piece) is False:
+            self.__environment.add_piece_to_wall()
             current_piece = self.__environment.next_piece()[0]
             self.__environment.place_piece_at_base_position(current_piece)
             if self.__environment.entering_in_collision(current_piece, True, False, False) is True:
