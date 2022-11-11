@@ -1,7 +1,4 @@
-import copy
 import os
-import random
-import time
 
 from src.game.tetrominos.piece import Piece
 
@@ -72,6 +69,7 @@ class Agent:
         current_piece = self.__environment.do()
 
         if self.safe_move_down(current_piece) is False:
+            self.__environment.add_piece_to_wall()
             self.__environment.clear_lines()
             current_piece = self.__environment.next_piece()
             self.__environment.place_piece_at_base_position(current_piece)

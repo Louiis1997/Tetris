@@ -6,6 +6,8 @@ from src.game.tetrominos.piece import Piece
 from src.reinforcement.agent import clear_console
 
 EMPTY_BLOCK = 0
+BLOCK = 1
+WALL = 2
 
 
 class TetrisEnvironment:
@@ -54,9 +56,18 @@ class TetrisEnvironment:
         for row in self.__board:
             print(row)
 
+    def print_states(self):
+        print("State is : ")
+        for row in self.__states:
+            print(row)
+
     @property
     def board(self):
         return self.__board
+
+    @property
+    def states(self):
+        return self.__states
 
     @property
     def height(self):
@@ -101,12 +112,43 @@ class TetrisEnvironment:
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
 
+    def update_states(self):
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                if item > 0:
+                    if self.__states[row][col] == WALL:
+                        pass
+                    else:
+                        self.__states[row][col] = BLOCK
+                elif item == 0:
+                    self.__states[row][col] = EMPTY_BLOCK
+                col += 1
+            row += 1
+            col = 0
+
+    def add_piece_to_wall(self):
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                if item > 0:
+                    self.__states[row][col] = WALL
+                elif item == 0:
+                    self.__states[row][col] = EMPTY_BLOCK
+                col += 1
+            row += 1
+            col = 0
+
     def place_piece_at_base_position(self, piece: Piece):
         """Place a piece on the board"""
         piece.init_matrix_position(self.width)
         for block in piece.blocks:
             block.x = block.x
             block.y = block.y + piece.current_matrix_position_in_board[1]
+            self.__board[block.x][block.y] = piece.grid_representation
+            self.update_states()
 
     @staticmethod
     def is_touching_itself(piece, x, y) -> bool:
