@@ -12,13 +12,12 @@ class TetrisEnvironment:
         self.__height = height
         self.__width = width
         self.__pieces = pieces
+        self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
         self.__current_piece = None
         self.__current_rotation = None
-
-        self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
 
     def reset(self, height, width):
         """Resets the game and returns the current state"""
@@ -182,4 +181,5 @@ class TetrisEnvironment:
         """Clears the lines"""
         for row in self.__board:
             if all(block != EMPTY_BLOCK for block in row):
-                pass
+                self.__board.remove(row)
+                self.__board.insert(0, [EMPTY_BLOCK] * self.__width)

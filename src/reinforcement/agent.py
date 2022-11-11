@@ -94,6 +94,8 @@ class Agent:
             self.__environment.print_board()
 
             # TODO -> Check for clear_lines
+            self.__environment.clear_lines()
+
             current_piece = self.__environment.next_piece()
             self.__environment.place_piece_at_base_position(current_piece)
             if self.__environment.entering_in_collision(current_piece, True, False, False) is True:
