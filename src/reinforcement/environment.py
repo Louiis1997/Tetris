@@ -3,6 +3,7 @@ import random
 from typing import List
 
 from src.game.tetrominos.piece import Piece
+from src.reinforcement.agent import clear_console
 
 EMPTY_BLOCK = 0
 
@@ -24,6 +25,14 @@ class TetrisEnvironment:
         self.__height = height
         self.__width = width
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
+        # Fill the board with pieces
+        # for i in range(5, self.__height):
+        #     for j in range(0, self.__width):
+        #         rand = random.randint(0, 3)
+        #         if rand == 1 or rand == 2:
+        #             self.__board[i][j] = random.randint(0, 7)
+        #         else:
+        #             self.__board[i][j] = 0
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
@@ -37,8 +46,10 @@ class TetrisEnvironment:
         self.create_shuffled_bag()
         self.next_piece()
         self.place_piece_at_base_position(self.__current_piece)
+        self.place_piece_in_board(self.__current_piece)
 
     def print_board(self):
+        clear_console()
         print("Board state is : ")
         for row in self.__board:
             print(row)
@@ -67,7 +78,7 @@ class TetrisEnvironment:
     def current_rotation(self):
         return self.__current_rotation
 
-    def get_current_piece(self) -> List[Piece]:
+    def get_current_piece(self) -> Piece:
         return self.__current_piece
 
     def next_piece(self):
@@ -85,13 +96,17 @@ class TetrisEnvironment:
         piece_indexes_bag = list(range(len(self.__pieces)))
         self.__current_bag_piece_index = random.sample(piece_indexes_bag, len(piece_indexes_bag))
 
+    def place_piece_in_board(self, piece: Piece):
+        """Place the piece in the board"""
+        for block in piece.blocks:
+            self.__board[block.x][block.y] = piece.grid_representation
+
     def place_piece_at_base_position(self, piece: Piece):
         """Place a piece on the board"""
         piece.init_matrix_position(self.width)
         for block in piece.blocks:
             block.x = block.x
             block.y = block.y + piece.current_matrix_position_in_board[1]
-            self.__board[block.x][block.y] = piece.grid_representation
 
     @staticmethod
     def is_touching_itself(piece, x, y) -> bool:
@@ -112,9 +127,9 @@ class TetrisEnvironment:
                     board_without_current_piece[block.x][block.y] = EMPTY_BLOCK
         return board_without_current_piece
 
-    def entering_in_collision(self, piece, down, left, right, previous_rotated_piece: Piece = None) -> bool:
+    def entering_in_collision(self, next_piece_position, down, left, right, previous_rotated_piece: Piece = None) -> bool:
         """Checks if the piece collides with pieces in current board"""
-        for block in piece.blocks:  # y => row, x => column
+        for block in next_piece_position.blocks:  # y => row, x => column
             x = block.x + 1 if down else block.x
             y = block.y + 1 if right else block.y - 1 if left else block.y
 
@@ -131,7 +146,7 @@ class TetrisEnvironment:
                 return True
 
             simulated_board_without_current_pieces = self.get_board_without_current_piece(
-                previous_rotated_piece if previous_rotated_piece else piece)
+                previous_rotated_piece if previous_rotated_piece else next_piece_position)
             simulated_next_position_value = simulated_board_without_current_pieces[x][y]
             if simulated_next_position_value != EMPTY_BLOCK:
                 return True
@@ -143,27 +158,24 @@ class TetrisEnvironment:
         for block in piece.blocks:
             self.__board[block.x][block.y] = EMPTY_BLOCK
         piece.move_down()
-        for block in piece.blocks:
-            self.__board[block.x][block.y] = piece.grid_representation
         self.__current_piece = piece
+        self.place_piece_in_board(self.__current_piece)
 
     def move_left(self, piece: Piece):
         """Move the piece left"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = EMPTY_BLOCK
         piece.move_left()
-        for block in piece.blocks:
-            self.__board[block.x][block.y] = piece.grid_representation
         self.__current_piece = piece
+        self.place_piece_in_board(self.__current_piece)
 
     def move_right(self, piece: Piece):
         """Move the piece right"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = EMPTY_BLOCK
         piece.move_right()
-        for block in piece.blocks:
-            self.__board[block.x][block.y] = piece.grid_representation
         self.__current_piece = piece
+        self.place_piece_in_board(self.__current_piece)
 
     def rotate(self, previous_piece, next_rotated_piece: Piece) -> Piece:
         """Rotate the piece"""

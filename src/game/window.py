@@ -8,7 +8,7 @@ SPRITE_SIZE = 40
 
 
 class TetrisWindow(arcade.Window):
-    def __init__(self, agent):
+    def __init__(self, agent, should_display_board=False):
         super().__init__(agent.environment.width * (SPRITE_SIZE * 1.25), agent.environment.height * (SPRITE_SIZE * 1.1),
                          'Tetris')
 
@@ -16,6 +16,7 @@ class TetrisWindow(arcade.Window):
         self.__iteration = 1
 
         self.__board = None
+        self.__should_display_board = should_display_board
 
         self.set_update_rate(1 / 10)
 
@@ -59,9 +60,10 @@ class TetrisWindow(arcade.Window):
     def on_update(self, delta_time):
         if not self.__agent.is_over:
             self.__agent.step()
-            # Make program sleep for 1 second
-            time.sleep(0.2)
+            self.__agent.print_board_if_needed(self.__should_display_board)
+            time.sleep(0.5)
         else:
+            time.sleep(5)
             self.__agent.reset()
             self.__iteration += 1
 
