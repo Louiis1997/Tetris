@@ -1,7 +1,5 @@
-import copy
 import os
 import random
-import time
 
 from src.game.tetrominos.piece import Piece
 

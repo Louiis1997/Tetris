@@ -3,7 +3,6 @@ import random
 from typing import List
 
 from src.game.tetrominos.piece import Piece
-from src.reinforcement.agent import clear_console
 
 EMPTY_BLOCK = 0
 
@@ -19,13 +18,13 @@ class TetrisEnvironment:
         self.__current_piece = None
         self.__current_rotation = None
 
-        self.__board = [[EMPTY_BLOCK for i in range(width)] for j in range(height)]
+        self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
 
     def reset(self, height, width):
         """Resets the game and returns the current state"""
         self.__height = height
         self.__width = width
-        self.__board = [[EMPTY_BLOCK for i in range(width)] for j in range(height)]
+        self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
@@ -132,7 +131,8 @@ class TetrisEnvironment:
                 # print("Collision detected -> left -> touched the left wall")
                 return True
 
-            simulated_board_without_current_pieces = self.get_board_without_current_piece(previous_rotated_piece if previous_rotated_piece else piece)
+            simulated_board_without_current_pieces = self.get_board_without_current_piece(
+                previous_rotated_piece if previous_rotated_piece else piece)
             simulated_next_position_value = simulated_board_without_current_pieces[x][y]
             if simulated_next_position_value != EMPTY_BLOCK:
                 return True
@@ -177,3 +177,9 @@ class TetrisEnvironment:
                 block.y] = next_rotated_piece.grid_representation
         self.__current_piece = next_rotated_piece
         return next_rotated_piece
+
+    def clear_lines(self):
+        """Clears the lines"""
+        for row in self.__board:
+            if all(block != EMPTY_BLOCK for block in row):
+                pass
