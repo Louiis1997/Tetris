@@ -90,6 +90,7 @@ class Agent:
         self.__environment.print_board()
 
         if self.safe_move_down(current_piece) is False:
+            self.__environment.add_piece_to_wall()
             clear_console()
             self.__environment.print_board()
 

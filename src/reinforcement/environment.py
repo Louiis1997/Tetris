@@ -5,6 +5,8 @@ from typing import List
 from src.game.tetrominos.piece import Piece
 
 EMPTY_BLOCK = 0
+BLOCK = 1
+WALL = 2
 
 
 class TetrisEnvironment:
@@ -13,7 +15,7 @@ class TetrisEnvironment:
         self.__width = width
         self.__pieces = pieces
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
-
+        self.__states = copy.deepcopy(self.__board)
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
         self.__current_piece = None
@@ -24,6 +26,7 @@ class TetrisEnvironment:
         self.__height = height
         self.__width = width
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
+        self.__states = copy.deepcopy(self.__board)
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
@@ -43,9 +46,18 @@ class TetrisEnvironment:
         for row in self.__board:
             print(row)
 
+    def print_states(self):
+        print("State is : ")
+        for row in self.__states:
+            print(row)
+
     @property
     def board(self):
         return self.__board
+
+    @property
+    def states(self):
+        return self.__states
 
     @property
     def height(self):
@@ -85,6 +97,35 @@ class TetrisEnvironment:
         piece_indexes_bag = list(range(len(self.__pieces)))
         self.__current_bag_piece_index = random.sample(piece_indexes_bag, len(piece_indexes_bag))
 
+    def update_states(self):
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                if item > 0:
+                    if self.__states[row][col] == WALL:
+                        pass
+                    else:
+                        self.__states[row][col] = BLOCK
+                elif item == 0:
+                    self.__states[row][col] = EMPTY_BLOCK
+                col += 1
+            row += 1
+            col = 0
+
+    def add_piece_to_wall(self):
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                if item > 0:
+                    self.__states[row][col] = WALL
+                elif item == 0:
+                    self.__states[row][col] = EMPTY_BLOCK
+                col += 1
+            row += 1
+            col = 0
+
     def place_piece_at_base_position(self, piece: Piece):
         """Place a piece on the board"""
         piece.init_matrix_position(self.width)
@@ -92,6 +133,7 @@ class TetrisEnvironment:
             block.x = block.x
             block.y = block.y + piece.current_matrix_position_in_board[1]
             self.__board[block.x][block.y] = piece.grid_representation
+            self.update_states()
 
     @staticmethod
     def is_touching_itself(piece, x, y) -> bool:
@@ -145,6 +187,7 @@ class TetrisEnvironment:
         piece.move_down()
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
+            self.update_states()
         self.__current_piece = piece
 
     def move_left(self, piece: Piece):
@@ -154,6 +197,7 @@ class TetrisEnvironment:
         piece.move_left()
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
+            self.update_states()
         self.__current_piece = piece
 
     def move_right(self, piece: Piece):
@@ -163,6 +207,7 @@ class TetrisEnvironment:
         piece.move_right()
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
+            self.update_states()
         self.__current_piece = piece
 
     def rotate(self, previous_piece, next_rotated_piece: Piece) -> Piece:
