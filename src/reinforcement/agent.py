@@ -1,4 +1,5 @@
 import os
+import random
 
 from src.game.tetrominos.piece import Piece
 
