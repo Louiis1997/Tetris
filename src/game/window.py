@@ -60,7 +60,7 @@ class TetrisWindow(arcade.Window):
         if not self.__agent.is_over:
             self.__agent.step()
             # Make program sleep for 1 second
-            time.sleep(0.1)
+            time.sleep(0.2)
         else:
             self.__agent.reset()
             self.__iteration += 1
@@ -68,7 +68,7 @@ class TetrisWindow(arcade.Window):
     def get_color_from_grid_representation(self, grid_representation):
         """ Get the color of a grid representation. """
         if grid_representation == EMPTY_BLOCK:
-            return arcade.color.COBALT
+            return arcade.color.BLUE_GRAY
         return self.__agent.environment.pieces[grid_representation][0].blocks[0].color
 
     def draw_grid(self, grid):

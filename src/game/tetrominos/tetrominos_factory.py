@@ -20,8 +20,8 @@ class TetrominosFactory:
 
     @staticmethod
     def create_I_tetrominos(grid_representation):
-        return [
-            Piece(
+        return {
+            0: Piece(
                 [
                     Block(0, 0, arcade.color.ELECTRIC_CYAN),
                     Block(1, 0, arcade.color.ELECTRIC_CYAN),
@@ -31,7 +31,7 @@ class TetrominosFactory:
                 0,
                 grid_representation
             ),
-            Piece(
+            90: Piece(
                 [
                     Block(1, 0, arcade.color.ELECTRIC_CYAN),
                     Block(1, 1, arcade.color.ELECTRIC_CYAN),
@@ -41,7 +41,7 @@ class TetrominosFactory:
                 90,
                 grid_representation
             ),
-            Piece(
+            180: Piece(
                 [
                     Block(3, 0, arcade.color.ELECTRIC_CYAN),
                     Block(2, 0, arcade.color.ELECTRIC_CYAN),
@@ -51,7 +51,7 @@ class TetrominosFactory:
                 180,
                 grid_representation
             ),
-            Piece(
+            270: Piece(
                 [
                     Block(1, 3, arcade.color.ELECTRIC_CYAN),
                     Block(1, 2, arcade.color.ELECTRIC_CYAN),
@@ -61,12 +61,12 @@ class TetrominosFactory:
                 270,
                 grid_representation
             ),
-        ]
+        }
 
     @staticmethod
     def create_T_tetrominos(grid_representation):
-        return [
-            Piece(
+        return {
+            0: Piece(
                 [
                     Block(1, 0, arcade.color.ELECTRIC_VIOLET),
                     Block(0, 1, arcade.color.ELECTRIC_VIOLET),
@@ -76,7 +76,7 @@ class TetrominosFactory:
                 0,
                 grid_representation
             ),
-            Piece(
+            90: Piece(
                 [
                     Block(1, 0, arcade.color.ELECTRIC_VIOLET),
                     Block(1, 1, arcade.color.ELECTRIC_VIOLET),
@@ -86,7 +86,7 @@ class TetrominosFactory:
                 90,
                 grid_representation
             ),
-            Piece(
+            180: Piece(
                 [
                     Block(0, 1, arcade.color.ELECTRIC_VIOLET),
                     Block(1, 1, arcade.color.ELECTRIC_VIOLET),
@@ -96,7 +96,7 @@ class TetrominosFactory:
                 180,
                 grid_representation
             ),
-            Piece(
+            270: Piece(
                 [
                     Block(1, 0, arcade.color.ELECTRIC_VIOLET),
                     Block(0, 1, arcade.color.ELECTRIC_VIOLET),
@@ -106,12 +106,12 @@ class TetrominosFactory:
                 270,
                 grid_representation
             ),
-        ]
+        }
 
     @staticmethod
     def create_L_tetrominos(grid_representation):
-        return [
-            Piece(
+        return {
+            0: Piece(
                 [
                     Block(0, 0, arcade.color.FLAME),
                     Block(0, 1, arcade.color.FLAME),
@@ -121,7 +121,7 @@ class TetrominosFactory:
                 0,
                 grid_representation
             ),
-            Piece(
+            90: Piece(
                 [
                     Block(1, 0, arcade.color.FLAME),
                     Block(2, 0, arcade.color.FLAME),
@@ -131,7 +131,7 @@ class TetrominosFactory:
                 90,
                 grid_representation
             ),
-            Piece(
+            180: Piece(
                 [
                     Block(0, 1, arcade.color.FLAME),
                     Block(1, 1, arcade.color.FLAME),
@@ -141,7 +141,7 @@ class TetrominosFactory:
                 180,
                 grid_representation
             ),
-            Piece(
+            270: Piece(
                 [
                     Block(1, 0, arcade.color.FLAME),
                     Block(1, 1, arcade.color.FLAME),
@@ -151,12 +151,12 @@ class TetrominosFactory:
                 270,
                 grid_representation
             ),
-        ]
+        }
 
     @staticmethod
     def create_J_tetrominos(grid_representation):
-        return [
-            Piece(
+        return {
+            0: Piece(
                 [
                     Block(2, 0, arcade.color.INTERNATIONAL_KLEIN_BLUE),
                     Block(0, 1, arcade.color.INTERNATIONAL_KLEIN_BLUE),
@@ -166,7 +166,7 @@ class TetrominosFactory:
                 0,
                 grid_representation
             ),
-            Piece(
+            90: Piece(
                 [
                     Block(1, 0, arcade.color.INTERNATIONAL_KLEIN_BLUE),
                     Block(1, 1, arcade.color.INTERNATIONAL_KLEIN_BLUE),
@@ -176,7 +176,7 @@ class TetrominosFactory:
                 90,
                 grid_representation
             ),
-            Piece(
+            180: Piece(
                 [
                     Block(0, 1, arcade.color.INTERNATIONAL_KLEIN_BLUE),
                     Block(1, 1, arcade.color.INTERNATIONAL_KLEIN_BLUE),
@@ -186,22 +186,23 @@ class TetrominosFactory:
                 180,
                 grid_representation
             ),
-            Piece(
+            270: Piece(
                 [
-                    Block(1, 0, arcade.color.INTERNATIONAL_KLEIN_BLUE),
-                    Block(0, 1, arcade.color.INTERNATIONAL_KLEIN_BLUE),
+
                     Block(1, 1, arcade.color.INTERNATIONAL_KLEIN_BLUE),
-                    Block(1, 2, arcade.color.INTERNATIONAL_KLEIN_BLUE),
+                    Block(2, 1, arcade.color.INTERNATIONAL_KLEIN_BLUE),
+                    Block(2, 2, arcade.color.INTERNATIONAL_KLEIN_BLUE),
+                    Block(2, 3, arcade.color.INTERNATIONAL_KLEIN_BLUE),
                 ],
                 270,
                 grid_representation
             ),
-        ]
+        }
 
     @staticmethod
     def create_Z_tetrominos(grid_representation):
-        return [
-            Piece(
+        return {
+            0: Piece(
                 [
                     Block(0, 0, arcade.color.MEDIUM_CANDY_APPLE_RED),
                     Block(1, 0, arcade.color.MEDIUM_CANDY_APPLE_RED),
@@ -211,7 +212,7 @@ class TetrominosFactory:
                 0,
                 grid_representation
             ),
-            Piece(
+            90: Piece(
                 [
                     Block(1, 0, arcade.color.MEDIUM_CANDY_APPLE_RED),
                     Block(1, 1, arcade.color.MEDIUM_CANDY_APPLE_RED),
@@ -221,7 +222,7 @@ class TetrominosFactory:
                 90,
                 grid_representation
             ),
-            Piece(
+            180: Piece(
                 [
                     Block(0, 0, arcade.color.MEDIUM_CANDY_APPLE_RED),
                     Block(1, 0, arcade.color.MEDIUM_CANDY_APPLE_RED),
@@ -231,7 +232,7 @@ class TetrominosFactory:
                 180,
                 grid_representation
             ),
-            Piece(
+            270: Piece(
                 [
                     Block(1, 0, arcade.color.MEDIUM_CANDY_APPLE_RED),
                     Block(1, 1, arcade.color.MEDIUM_CANDY_APPLE_RED),
@@ -241,12 +242,12 @@ class TetrominosFactory:
                 270,
                 grid_representation
             ),
-        ]
+        }
 
     @staticmethod
     def create_S_tetrominos(grid_representation):
-        return [
-            Piece(
+        return {
+            0: Piece(
                 [
                     Block(1, 0, arcade.color.MALACHITE),
                     Block(2, 0, arcade.color.MALACHITE),
@@ -256,7 +257,7 @@ class TetrominosFactory:
                 0,
                 grid_representation
             ),
-            Piece(
+            90: Piece(
                 [
                     Block(0, 0, arcade.color.MALACHITE),
                     Block(0, 1, arcade.color.MALACHITE),
@@ -266,7 +267,7 @@ class TetrominosFactory:
                 90,
                 grid_representation
             ),
-            Piece(
+            180: Piece(
                 [
                     Block(1, 0, arcade.color.MALACHITE),
                     Block(2, 0, arcade.color.MALACHITE),
@@ -276,7 +277,7 @@ class TetrominosFactory:
                 180,
                 grid_representation
             ),
-            Piece(
+            270: Piece(
                 [
                     Block(0, 0, arcade.color.MALACHITE),
                     Block(0, 1, arcade.color.MALACHITE),
@@ -286,12 +287,12 @@ class TetrominosFactory:
                 270,
                 grid_representation
             ),
-        ]
+        }
 
     @staticmethod
     def create_O_tetrominos(grid_representation):
-        return [
-            Piece(
+        return {
+            0: Piece(
                 [
                     Block(0, 0, arcade.color.MELLOW_YELLOW),
                     Block(1, 0, arcade.color.MELLOW_YELLOW),
@@ -301,7 +302,7 @@ class TetrominosFactory:
                 0,
                 grid_representation
             ),
-            Piece(
+            90: Piece(
                 [
                     Block(0, 0, arcade.color.MELLOW_YELLOW),
                     Block(1, 0, arcade.color.MELLOW_YELLOW),
@@ -311,7 +312,7 @@ class TetrominosFactory:
                 90,
                 grid_representation
             ),
-            Piece(
+            180: Piece(
                 [
                     Block(0, 0, arcade.color.MELLOW_YELLOW),
                     Block(1, 0, arcade.color.MELLOW_YELLOW),
@@ -321,7 +322,7 @@ class TetrominosFactory:
                 180,
                 grid_representation
             ),
-            Piece(
+            270: Piece(
                 [
                     Block(0, 0, arcade.color.MELLOW_YELLOW),
                     Block(1, 0, arcade.color.MELLOW_YELLOW),
@@ -331,4 +332,4 @@ class TetrominosFactory:
                 270,
                 grid_representation
             ),
-        ]
+        }

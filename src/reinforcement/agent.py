@@ -1,6 +1,7 @@
 import copy
 import os
 import random
+import time
 
 from src.game.tetrominos.piece import Piece
 
@@ -70,15 +71,32 @@ class Agent:
             return True
         return False
 
+    def safe_rotate(self, current_piece: Piece) -> Piece:
+        """Rotate if possible"""
+        next_rotated_piece = current_piece.get_next_rotated_piece(self.environment.current_rotation,
+                                                                  self.environment.pieces,
+                                                                  self.environment.current_piece_index)
+        if self.__environment.entering_in_collision(next_rotated_piece, False, False, False, current_piece) is False:
+            return self.__environment.rotate(current_piece, next_rotated_piece)
+        return current_piece
 
     def step(self):
         """Do a step"""
-        current_piece = self.__environment.get_current_piece()[0]
+        current_piece = self.__environment.get_current_piece()
+
+        clear_console()
+        self.__environment.print_board()
+        current_piece = self.safe_rotate(current_piece)  # TODO -> FIX
+
         clear_console()
         self.__environment.print_board()
 
         if self.safe_move_down(current_piece) is False:
-            current_piece = self.__environment.next_piece()[0]
+            clear_console()
+            self.__environment.print_board()
+
+            # TODO -> Check for clear_lines
+            current_piece = self.__environment.next_piece()
             self.__environment.place_piece_at_base_position(current_piece)
             if self.__environment.entering_in_collision(current_piece, True, False, False) is True:
                 self.is_over = True
