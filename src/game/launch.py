@@ -35,4 +35,4 @@ if __name__ == '__main__':
                 time.sleep(0.2)
             agent.reset()
             iteration += 1
-            print(f"#{iteration:04d} Score : {agent.score:.2f} T°C : {agent.exploration:.2f}")
+            print(f"#{iteration:04d} Score : {agent.score} T°C : {agent.exploration:.2f}")

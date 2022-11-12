@@ -54,7 +54,7 @@ class TetrisWindow(arcade.Window):
         self.draw_grid(self.__agent.environment.board)
 
         arcade.draw_text(
-            f"#{self.__iteration:04d} Score : {self.__agent.score:.2f} T°C : {self.__agent.exploration:.2f}",
+            f"#{self.__iteration:04d} Score : {self.__agent.score:.2f} T°C : {self.__agent.exploration * 100:.2f}",
             10, 10, arcade.csscolor.WHITE, 20)
 
     def on_update(self, delta_time):

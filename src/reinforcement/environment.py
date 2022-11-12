@@ -296,7 +296,7 @@ class TetrisEnvironment:
         return self.__reward_bumpiness * bumpiness
 
     def compute_piece_height_reward(self):
-        return sum([block.x for block in self.get_current_piece().blocks]) - ((self.__height - 1) * 2)
+        return sum([block.x - 10 for block in self.get_current_piece().blocks])
 
     def get_old_holes_count(self):
         old_board = self.get_board_without_current_piece(self.get_current_piece())
@@ -328,10 +328,11 @@ class TetrisEnvironment:
 
     def compute_rewards(self):
         rewards = 0
-        rewards += self.compute_line_cleared_reward()
-        rewards += self.compute_bumpiness_reward()
-        rewards += self.compute_piece_height_reward()
-        rewards += self.compute_holes_reward()
+        line_cleared_reward = self.compute_line_cleared_reward()
+        bumpiness_reward = self.compute_bumpiness_reward()
+        piece_height_reward = self.compute_piece_height_reward()
+        holes_reward = self.compute_holes_reward()
+        rewards += line_cleared_reward + bumpiness_reward + piece_height_reward + holes_reward
         return rewards
 
     def do(self, action: ACTIONS):

@@ -79,7 +79,6 @@ class Agent:
         """Move down if possible"""
         if self.__environment.entering_in_collision(current_piece, True, False, False) is False:
             self.__environment.move_down(current_piece)
-            self.__score += 1
             return True
         # print(f"Has entered in collision at score {self.__score}")
         return False
@@ -123,10 +122,14 @@ class Agent:
         # OR
         # TODO      -> Implement Neural Network
         # TODO      -> BEST OPTION -> BOTH
+        action = None
+        rewards = 0
+
         for movement in range(10):
             self.update_current_state()
             action = self.best_action()
             current_piece, rewards = self.__environment.do(action)
+            self.__score += rewards
             self.set_current_piece(current_piece)
 
         if self.safe_move_down(self.get_current_piece()) is False:
