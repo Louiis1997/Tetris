@@ -219,7 +219,6 @@ class TetrisEnvironment:
 
         for block in next_rotated_piece.blocks:
             self.__board[block.x][block.y] = next_rotated_piece.grid_representation
-            self.update_states()
         self.__current_piece = next_rotated_piece
         return next_rotated_piece
 
@@ -281,7 +280,7 @@ class TetrisEnvironment:
         elif action == RIGHT:
             self.safe_move_right(current_piece)
         elif action == ROTATE:
-            self.safe_rotate(current_piece)
+            current_piece = self.safe_rotate(current_piece)
         elif action == NONE:
             pass
 
@@ -292,7 +291,7 @@ class TetrisEnvironment:
                 if all(block != EMPTY_BLOCK for block in row):
                     rewards += self.__reward_clear_line
             # The height of the current piece reward
-            rewards = sum([block.x for block in current_piece.blocks]) - self.__height
+            rewards = sum([block.x for block in current_piece.blocks]) - ((self.__height - 1) * 4)
             print("Rewards : ", rewards)
 
         return current_piece, rewards

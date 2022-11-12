@@ -93,6 +93,8 @@ class Agent:
         # 𝑄(𝑠t,𝑎t) ⟵ 𝑄(𝑠t,𝑎t) + 𝛼[𝑟+1 + 𝛾𝑄(𝑠t+1, 𝑎t+1) − 𝑄(𝑠t,𝑎t)]
         if self.__qtable.get(self.__state, 0) == 0:
             self.__qtable[self.__state] = {}
+            for a in ACTIONS:
+                self.__qtable[self.__state][a] = 0.0
             self.__qtable[self.__state][action] = 0.0
 
         maxQ = max(self.__qtable[self.__state].values())
