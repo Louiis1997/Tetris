@@ -156,6 +156,35 @@ class TetrisEnvironment:
             row += 1
             col = 0
 
+    def update_states(self):
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                if item > 0:
+                    if self.__states[row][col] == WALL:
+                        pass
+                    else:
+                        self.__states[row][col] = BLOCK
+                elif item == 0:
+                    self.__states[row][col] = EMPTY_BLOCK
+                col += 1
+            row += 1
+            col = 0
+
+    def add_piece_to_wall(self):
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                if item > 0:
+                    self.__states[row][col] = WALL
+                elif item == 0:
+                    self.__states[row][col] = EMPTY_BLOCK
+                col += 1
+            row += 1
+            col = 0
+
     def place_piece_at_base_position(self, piece: Piece):
         """Place a piece on the board"""
         piece.init_matrix_position(self.width)
