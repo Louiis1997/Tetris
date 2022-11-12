@@ -37,9 +37,6 @@ class Agent:
         self.is_over = False
 
     def best_action(self):
-        if random() < self.__exploration:
-            self.__exploration *= self.__cooling_rate
-            return choice(ACTIONS.values())
         q0 = self.__qtable.get(self.__state, None)  # Get the qtable for the current state
         if q0 is None:
             self.__qtable[self.__state] = {}
@@ -47,6 +44,11 @@ class Agent:
                 if self.__qtable[self.__state].get(action, None) is None:
                     self.__qtable[self.__state][action] = 0.0
             q0 = self.__qtable[self.__state]
+
+        if random() < self.__exploration:
+            self.__exploration *= self.__cooling_rate
+            return choice(list(ACTIONS.values()))
+
         max_q = max(q0, key=q0.get) if len(q0) > 0 else 0  # Get the max q value for the current state
         return max_q
 
