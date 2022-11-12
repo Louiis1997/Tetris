@@ -1,4 +1,5 @@
 import copy
+import math
 
 from src.game.tetrominos.piece import Piece
 from src.reinforcement.agent import clear_console, ACTIONS, LEFT, RIGHT, ROTATE, NONE
@@ -20,9 +21,9 @@ class TetrisEnvironment:
         self.__current_piece_index = None
         self.__current_piece = None
         self.__current_rotation = None
-        self.__reward_clear_line = 100
-        self.__reward_bumpiness = -5
-        self.__reward_new_holes = -10
+        self.__reward_clear_line = 1000
+        self.__reward_bumpiness = -20
+        self.__reward_new_holes = -50
 
     def get_lowest_x_for_states_by_current_piece(self):
         x = 0
@@ -31,12 +32,36 @@ class TetrisEnvironment:
                 x = block.x
         return x
 
-    def update_states_for_current_board(self):
+    def update_states_for_current_board(self, current_piece=None):
+        """Update the radar for the current board"""
+        if current_piece is None:
+            return
         # Add next 3 lines (without edges) to the states
+        imaginary_matrix_size = 4
+        radar_width = 6
+        if radar_width > self.width:
+            raise Exception("Radar width is bigger than the board width")
+
         states_first_line_x_coordinate = self.get_lowest_x_for_states_by_current_piece()
         for x in range(states_first_line_x_coordinate, states_first_line_x_coordinate + 3):
+            # 10 * 28 * 2^(3*6)
             if x < len(self.__board):
-                for y in range(1, len(self.__board[x])):
+                difference = radar_width - imaginary_matrix_size
+                left_overflow = math.floor(difference / 2)
+                right_overflow = math.ceil(difference / 2)
+
+                radar_y_start = current_piece.current_matrix_position_in_board[1] - left_overflow
+                radar_y_end = current_piece.current_matrix_position_in_board[1] + imaginary_matrix_size + right_overflow
+
+                if radar_y_start < 0:
+                    radar_y_start = 0
+                    radar_y_end = radar_width - 1
+
+                if radar_y_end > self.width - 1:
+                    radar_y_start = (self.width - 1) - radar_width
+                    radar_y_end = self.width - 1
+
+                for y in range(radar_y_start, radar_y_end + 1):
                     board_value = self.__board[x][y]
                     if board_value == EMPTY_BLOCK:
                         self.__states[x, y] = EMPTY_BLOCK
@@ -137,7 +162,7 @@ class TetrisEnvironment:
         """Place the piece in the board"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
-        self.update_states_for_current_board()
+        self.update_states_for_current_board(piece)
 
     def place_piece_at_base_position(self, piece: Piece):
         """Place a piece on the board"""
@@ -146,7 +171,7 @@ class TetrisEnvironment:
             block.x = block.x
             block.y = block.y + piece.current_matrix_position_in_board[1]
             self.__board[block.x][block.y] = piece.grid_representation
-        self.update_states_for_current_board()
+        self.update_states_for_current_board(piece)
 
     @staticmethod
     def is_touching_itself(piece, x, y) -> bool:

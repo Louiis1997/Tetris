@@ -51,6 +51,8 @@ class Agent:
             return choice(list(ACTIONS.values()))
 
         max_q = max(q0, key=q0.get) if len(q0) > 0 else 0  # Get the max q value for the current state
+        print(f"Chose action : {max_q}, with q value : {self.__qtable[self.__state]}")
+
         return max_q
 
     def reset(self, append_score=True):
@@ -115,7 +117,6 @@ class Agent:
         maxQ = max(self.__qtable[self.__state].values())
         delta = self.__alpha * (rewards + self.__gamma * maxQ - self.__qtable[self.__state][action])
         self.__qtable[self.__state][action] += delta
-        print("Updated Qtable : ", self.__qtable[self.__state])
 
 
     def set_current_piece(self, current_piece):

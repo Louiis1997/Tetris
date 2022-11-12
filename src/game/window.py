@@ -3,10 +3,9 @@ import time
 import arcade
 
 from src.reinforcement.environment import EMPTY_BLOCK
+FILE_AGENT = '../save/agent.al1'
 
 SPRITE_SIZE = 40
-
-FILE_AGENT = '../save/agent.al1'
 
 class TetrisWindow(arcade.Window):
     def __init__(self, agent, should_display_board=False):

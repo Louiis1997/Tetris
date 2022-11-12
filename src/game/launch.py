@@ -3,17 +3,15 @@ import time
 
 import arcade
 
-from src.reinforcement.agent import Agent
+from src.reinforcement.agent import Agent, clear_console
 from src.reinforcement.environment import TetrisEnvironment
 from src.game.tetrominos.tetrominos_factory import TetrominosFactory
-from src.game.window import TetrisWindow
+from src.game.window import TetrisWindow, FILE_AGENT
 
 LINE_COUNT = 20
 COLUMN_COUNT = 10
 
 PIECES = TetrominosFactory.create_tetrominos()
-
-FILE_AGENT = '../save/agent.al1'
 
 if __name__ == '__main__':
     wants_graphic_interface = True
@@ -38,9 +36,10 @@ if __name__ == '__main__':
         for i in range(iteration_wanted):
             while not agent.is_over:
                 agent.step()
-                agent.print_board_if_needed(wants_to_display_board)
                 agent.save(FILE_AGENT)
-                time.sleep(0.2)
+                agent.print_board_if_needed(wants_to_display_board)
+                # time.sleep(0.2)
             agent.reset()
             iteration += 1
             print(f"#{iteration:04d} Score : {agent.score} T°C : {agent.exploration:.2f}")
+            clear_console()
