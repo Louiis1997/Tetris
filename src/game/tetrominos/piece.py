@@ -27,7 +27,7 @@ class Piece:
 
     def init_matrix_position(self, board_size):
         matrix_width = 4
-        self.current_matrix_position_in_board = [0, math.floor(board_size / 2) - math.floor(matrix_width / 2)]
+        self.current_matrix_position_in_board = [0, math.floor(board_size / 2) - math.floor(matrix_width / 2) + 1]
 
     def get_next_rotated_piece(self, current_rotation, pieces, current_piece_index):
         next_rotation = (current_rotation + 90) % 360

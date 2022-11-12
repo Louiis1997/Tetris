@@ -16,17 +16,36 @@ class TetrisEnvironment:
         self.__width = width
         self.__pieces = pieces
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
+        self.__states = {}
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                self.__states[row, col] = item
+                col += 1
+            row += 1
+            col = 0
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
         self.__current_piece = None
         self.__current_rotation = None
+        self.__reward_clear_line = 100
 
     def reset(self, height, width):
         """Resets the game and returns the current state"""
         self.__height = height
         self.__width = width
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
+        self.__states = {}
+        row = 0
+        col = 0
+        for line in self.__board:
+            for item in line:
+                self.__states[row, col] = item
+                col += 1
+            row += 1
+            col = 0
         # Fill the board with pieces
         # for i in range(5, self.__height):
         #     for j in range(0, self.__width):
@@ -56,18 +75,13 @@ class TetrisEnvironment:
         for row in self.__board:
             print(row)
 
-    def print_states(self):
-        print("State is : ")
-        for row in self.__states:
-            print(row)
-
     @property
     def board(self):
         return self.__board
 
     @property
     def states(self):
-        return self.__states
+        return list(self.__states.keys())
 
     @property
     def height(self):
@@ -98,19 +112,20 @@ class TetrisEnvironment:
             self.create_shuffled_bag()
         else:
             self.__current_piece_index = self.__current_bag_piece_index.pop()
-
         self.__current_piece = copy.deepcopy(self.__pieces[self.current_piece_index][0])
         return self.__current_piece
 
     def create_shuffled_bag(self):
         """Create a queue of shuffled pieces"""
         piece_indexes_bag = list(range(len(self.__pieces)))
-        self.__current_bag_piece_index = random.sample(piece_indexes_bag, len(piece_indexes_bag))
+        # self.__current_bag_piece_index = random.sample(piece_indexes_bag, len(piece_indexes_bag))
+        self.__current_bag_piece_index = piece_indexes_bag
 
     def place_piece_in_board(self, piece: Piece):
         """Place the piece in the board"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
+            self.update_states()
 
     def update_states(self):
         row = 0
@@ -118,12 +133,12 @@ class TetrisEnvironment:
         for line in self.__board:
             for item in line:
                 if item > 0:
-                    if self.__states[row][col] == WALL:
+                    if self.__states[row, col] == WALL:
                         pass
                     else:
-                        self.__states[row][col] = BLOCK
+                        self.__states[row, col] = BLOCK
                 elif item == 0:
-                    self.__states[row][col] = EMPTY_BLOCK
+                    self.__states[row, col] = EMPTY_BLOCK
                 col += 1
             row += 1
             col = 0
@@ -134,9 +149,9 @@ class TetrisEnvironment:
         for line in self.__board:
             for item in line:
                 if item > 0:
-                    self.__states[row][col] = WALL
+                    self.__states[row, col] = WALL
                 elif item == 0:
-                    self.__states[row][col] = EMPTY_BLOCK
+                    self.__states[row, col] = EMPTY_BLOCK
                 col += 1
             row += 1
             col = 0
@@ -169,7 +184,8 @@ class TetrisEnvironment:
                     board_without_current_piece[block.x][block.y] = EMPTY_BLOCK
         return board_without_current_piece
 
-    def entering_in_collision(self, next_piece_position, down, left, right, previous_rotated_piece: Piece = None) -> bool:
+    def entering_in_collision(self, next_piece_position, down, left, right,
+                              previous_rotated_piece: Piece = None) -> bool:
         """Checks if the piece collides with pieces in current board"""
         for block in next_piece_position.blocks:  # y => row, x => column
             x = block.x + 1 if down else block.x
@@ -226,8 +242,8 @@ class TetrisEnvironment:
             self.__board[block.x][block.y] = EMPTY_BLOCK
 
         for block in next_rotated_piece.blocks:
-            self.__board[block.x][
-                block.y] = next_rotated_piece.grid_representation
+            self.__board[block.x][block.y] = next_rotated_piece.grid_representation
+            self.update_states()
         self.__current_piece = next_rotated_piece
         return next_rotated_piece
 
@@ -237,6 +253,7 @@ class TetrisEnvironment:
             if all(block != EMPTY_BLOCK for block in row):
                 self.__board.remove(row)
                 self.__board.insert(0, [EMPTY_BLOCK] * self.__width)
+                self.update_states()
 
     def safe_move_left(self, current_piece: Piece) -> bool:
         """Move left if possible"""
@@ -261,20 +278,36 @@ class TetrisEnvironment:
             return self.rotate(current_piece, next_rotated_piece)
         return current_piece
 
-    def do(self):
+    def do(self, action):
         current_piece = self.get_current_piece()
+        if action == 'L':
+            self.safe_move_left(current_piece)
+        elif action == 'R':
+            self.safe_move_right(current_piece)
+        elif action == 'U':
+            self.safe_rotate(current_piece)
+        elif action == 'N':
+            pass
 
-        should_rotate = random.randint(0, 1)
+        if self.entering_in_collision(current_piece, True, False, False) is True:
+            for row in self.__board:
+                if all(block != EMPTY_BLOCK for block in row):
+                    reward = self.__reward_clear_line
+            reward = self.__height - (self.__height - current_piece.blocks[3].x)
+        else:
+            reward = 0
+
+        '''should_rotate = random.randint(0, 1)
         if should_rotate:
             current_piece = self.safe_rotate(current_piece)
         # Make a random move for now
         left_or_right = random.randint(0, 1)
         number_of_times = random.randint(1, 6)
-        for _ in range(number_of_times):
+         for _ in range(number_of_times):
             if left_or_right == 0:
                 self.safe_move_left(current_piece)
             else:
                 for _ in range(number_of_times):
-                    self.safe_move_right(current_piece)
+                    self.safe_move_right(current_piece)'''
 
-        return current_piece
+        return current_piece, reward
