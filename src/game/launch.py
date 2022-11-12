@@ -17,7 +17,7 @@ if __name__ == '__main__':
     wants_to_display_board = False
 
     env = TetrisEnvironment(LINE_COUNT, COLUMN_COUNT, PIECES)
-    agent = Agent(env, wants_to_display_board)
+    agent = Agent(env)
 
     if wants_graphic_interface:
         window = TetrisWindow(agent, wants_to_display_board)

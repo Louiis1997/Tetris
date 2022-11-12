@@ -33,15 +33,16 @@ class TetrisEnvironment:
         # Add next 3 lines (without edges) to the states
         states_first_line_x_coordinate = self.get_lowest_x_for_states_by_current_piece()
         for x in range(states_first_line_x_coordinate, states_first_line_x_coordinate + 3):
-            for y in range(1, len(self.__board[x])):
-                board_value = self.__board[x][y]
-                if board_value == EMPTY_BLOCK:
-                    self.__states[x, y] = EMPTY_BLOCK
-                else:
-                    self.__states[x, y] = WALL
+            if x < len(self.__board):
+                for y in range(1, len(self.__board[x])):
+                    board_value = self.__board[x][y]
+                    if board_value == EMPTY_BLOCK:
+                        self.__states[x, y] = EMPTY_BLOCK
+                    else:
+                        self.__states[x, y] = WALL
 
         # Add current pieces to the states
-        for block in self.__current_piece.blocks:
+        for block in self.get_current_piece().blocks:
             self.__states[block.x, block.y] = CURRENT_PIECE_BLOCK
 
     def reset(self, height, width):
@@ -112,13 +113,17 @@ class TetrisEnvironment:
     def get_current_piece(self) -> Piece:
         return self.__current_piece
 
+    def set_current_piece(self, piece):
+        self.__current_piece = piece
+
     def next_piece(self):
         """Get the next piece"""
         if len(self.__current_bag_piece_index) == 0:
             self.create_shuffled_bag()
         self.__current_piece_index = self.__current_bag_piece_index.pop()
-        self.__current_piece = copy.deepcopy(self.__pieces[self.current_piece_index][0])
-        return self.__current_piece
+        current_piece = copy.deepcopy(self.__pieces[self.current_piece_index][0])
+        self.set_current_piece(current_piece)
+        return self.get_current_piece()
 
     def create_shuffled_bag(self):
         """Create a queue of shuffled pieces"""
@@ -130,7 +135,7 @@ class TetrisEnvironment:
         """Place the piece in the board"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
-            self.update_states_for_current_board()
+        self.update_states_for_current_board()
 
     def place_piece_at_base_position(self, piece: Piece):
         """Place a piece on the board"""
@@ -139,7 +144,7 @@ class TetrisEnvironment:
             block.x = block.x
             block.y = block.y + piece.current_matrix_position_in_board[1]
             self.__board[block.x][block.y] = piece.grid_representation
-            self.update_states_for_current_board()
+        self.update_states_for_current_board()
 
     @staticmethod
     def is_touching_itself(piece, x, y) -> bool:
@@ -192,24 +197,24 @@ class TetrisEnvironment:
         for block in piece.blocks:
             self.__board[block.x][block.y] = EMPTY_BLOCK
         piece.move_down()
-        self.__current_piece = piece
-        self.place_piece_in_board(self.__current_piece)
+        self.set_current_piece(piece)
+        self.place_piece_in_board(self.get_current_piece())
 
     def move_left(self, piece: Piece):
         """Move the piece left"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = EMPTY_BLOCK
         piece.move_left()
-        self.__current_piece = piece
-        self.place_piece_in_board(self.__current_piece)
+        self.set_current_piece(piece)
+        self.place_piece_in_board(self.get_current_piece())
 
     def move_right(self, piece: Piece):
         """Move the piece right"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = EMPTY_BLOCK
         piece.move_right()
-        self.__current_piece = piece
-        self.place_piece_in_board(self.__current_piece)
+        self.set_current_piece(piece)
+        self.place_piece_in_board(self.get_current_piece())
 
     def rotate(self, previous_piece, next_rotated_piece: Piece) -> Piece:
         """Rotate the piece"""
@@ -219,8 +224,9 @@ class TetrisEnvironment:
 
         for block in next_rotated_piece.blocks:
             self.__board[block.x][block.y] = next_rotated_piece.grid_representation
-        self.__current_piece = next_rotated_piece
-        return next_rotated_piece
+
+        self.set_current_piece(next_rotated_piece)
+        return self.get_current_piece()
 
     def clear_lines(self) -> int:
         """Clears the lines"""
@@ -291,7 +297,6 @@ class TetrisEnvironment:
                 if all(block != EMPTY_BLOCK for block in row):
                     rewards += self.__reward_clear_line
             # The height of the current piece reward
-            rewards = sum([block.x for block in current_piece.blocks]) - ((self.__height - 1) * 4)
-            print("Rewards : ", rewards)
+            rewards = sum([block.x for block in current_piece.blocks]) - ((self.__height - 1) * 2)
 
         return current_piece, rewards

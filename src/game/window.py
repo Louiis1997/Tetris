@@ -63,7 +63,7 @@ class TetrisWindow(arcade.Window):
             self.__agent.print_board_if_needed(self.__should_display_board)
             time.sleep(0.01)
         else:
-            time.sleep(1)
+            time.sleep(0.5)
             self.__agent.reset()
             self.__iteration += 1
 
