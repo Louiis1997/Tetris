@@ -123,10 +123,11 @@ class Agent:
         # OR
         # TODO      -> Implement Neural Network
         # TODO      -> BEST OPTION -> BOTH
-        self.update_current_state()
-        action = self.best_action()
-        current_piece, rewards = self.__environment.do(action)
-        self.set_current_piece(current_piece)
+        for movement in range(10):
+            self.update_current_state()
+            action = self.best_action()
+            current_piece, rewards = self.__environment.do(action)
+            self.set_current_piece(current_piece)
 
         if self.safe_move_down(self.get_current_piece()) is False:
             self.update_qtable(action, rewards)

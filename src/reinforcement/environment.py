@@ -1,5 +1,4 @@
 import copy
-import time
 
 from src.game.tetrominos.piece import Piece
 from src.reinforcement.agent import clear_console, ACTIONS, LEFT, RIGHT, ROTATE, NONE
@@ -294,7 +293,7 @@ class TetrisEnvironment:
 
     def compute_bumpiness_reward(self):
         bumpiness = self.compute_bumpiness()
-        return -(self.__reward_bumpiness * bumpiness)
+        return self.__reward_bumpiness * bumpiness
 
     def compute_piece_height_reward(self):
         return sum([block.x for block in self.get_current_piece().blocks]) - ((self.__height - 1) * 2)
@@ -325,7 +324,7 @@ class TetrisEnvironment:
         return current_holes_count - old_holes_count
 
     def compute_holes_reward(self):
-        return -(self.__reward_new_holes * self.get_new_holes_count())
+        return self.__reward_new_holes * self.get_new_holes_count()
 
     def compute_rewards(self):
         rewards = 0
