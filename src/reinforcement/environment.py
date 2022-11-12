@@ -1,4 +1,5 @@
 import copy
+import time
 
 from src.game.tetrominos.piece import Piece
 from src.reinforcement.agent import clear_console, ACTIONS, LEFT, RIGHT, ROTATE, NONE
@@ -21,6 +22,8 @@ class TetrisEnvironment:
         self.__current_piece = None
         self.__current_rotation = None
         self.__reward_clear_line = 100
+        self.__reward_bumpiness = -5
+        self.__reward_new_holes = -10
 
     def get_lowest_x_for_states_by_current_piece(self):
         x = 0
@@ -261,22 +264,75 @@ class TetrisEnvironment:
             return self.rotate(current_piece, next_rotated_piece)
         return current_piece
 
-    def compute_line_cleared_reward(self, cleared_lines_count):
-        if cleared_lines_count == 1:
-                return 100
-        elif cleared_lines_count == 2:
-            return 300
-        elif cleared_lines_count == 3:
-            return 500
-        elif cleared_lines_count == 4:
-            return 800
-        elif cleared_lines_count > 4:
-            return 1500
-        return 0
-
-    def compute_rewards(self, cleared_lines_count):
+    def compute_line_cleared_reward(self):
         rewards = 0
-        rewards += self.compute_line_cleared_reward(cleared_lines_count)
+        # The more lines cleared, the more reward
+        for row in self.__board:
+            if all(block != EMPTY_BLOCK for block in row):
+                rewards += self.__reward_clear_line
+        # The height of the current piece reward
+        return rewards
+
+    def get_column_height(self, col):
+        """Returns the height of the given column"""
+        height = 0
+        for row in range(self.__height):
+            if self.__board[row][col] != EMPTY_BLOCK:
+                height = self.__height - row
+                break
+        return height
+
+    def compute_bumpiness(self):
+        """Sum of the absolute differences between the heights of adjacent columns"""
+        total_bumpiness = 0
+
+        for col in range(self.__width - 1):
+            bumpiness = abs(self.get_column_height(col) - self.get_column_height(col + 1))
+            total_bumpiness += bumpiness
+
+        return total_bumpiness
+
+    def compute_bumpiness_reward(self):
+        bumpiness = self.compute_bumpiness()
+        return -(self.__reward_bumpiness * bumpiness)
+
+    def compute_piece_height_reward(self):
+        return sum([block.x for block in self.get_current_piece().blocks]) - ((self.__height - 1) * 2)
+
+    def get_old_holes_count(self):
+        old_board = self.get_board_without_current_piece(self.get_current_piece())
+        return self.get_holes_count(old_board)
+
+    def get_holes_count(self, board):
+        """Returns the number of holes in the board (meaning empty spaces that are underneath at least one block)"""
+        holes = 0
+
+        # Iterate on each cell of the board by column, from top to bottom and left to right
+        for col in range(self.__width):
+            found_block = False
+            for row in range(self.__height):
+                # If a block is found, then the next empty spaces are holes
+                if board[row][col] != EMPTY_BLOCK:
+                    found_block = True
+                elif found_block and board[row][col] == EMPTY_BLOCK:
+                    holes += 1
+
+        return holes
+
+    def get_new_holes_count(self):
+        old_holes_count = self.get_old_holes_count()
+        current_holes_count = self.get_holes_count(self.__board)
+        return current_holes_count - old_holes_count
+
+    def compute_holes_reward(self):
+        return -(self.__reward_new_holes * self.get_new_holes_count())
+
+    def compute_rewards(self):
+        rewards = 0
+        rewards += self.compute_line_cleared_reward()
+        rewards += self.compute_bumpiness_reward()
+        rewards += self.compute_piece_height_reward()
+        rewards += self.compute_holes_reward()
         return rewards
 
     def do(self, action: ACTIONS):
@@ -292,11 +348,6 @@ class TetrisEnvironment:
 
         rewards = 0
         if self.entering_in_collision(current_piece, True, False, False) is True:
-            # The more lines cleared, the more reward
-            for row in self.__board:
-                if all(block != EMPTY_BLOCK for block in row):
-                    rewards += self.__reward_clear_line
-            # The height of the current piece reward
-            rewards = sum([block.x for block in current_piece.blocks]) - ((self.__height - 1) * 2)
+            rewards += self.compute_rewards()
 
         return current_piece, rewards
