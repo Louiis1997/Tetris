@@ -1,5 +1,6 @@
 import os
 import random
+from random import *
 
 from src.game.tetrominos.piece import Piece
 
@@ -7,12 +8,12 @@ LEFT = 'L'
 RIGHT = 'R'
 ROTATE = 'U'
 NONE = 'N'
-ACTIONS = {
+ACTIONS = [
     LEFT,
     RIGHT,
     ROTATE,
     NONE
-}
+]
 
 
 def clear_console():
@@ -37,9 +38,13 @@ class Agent:
         self.is_over = False
 
     def best_action(self):
-        q0 = self.__qtable.get(self.__state, {})  # Get the qtable for the current state
-        max_q = max(q0, key=q0.get) if len(q0) > 0 else 0  # Get the max q value for the current state
-        return max_q
+        if random() < self.__exploration:
+            self.__exploration *= self.__cooling_rate
+            return choice(ACTIONS)
+        else:
+            q0 = self.__qtable.get(self.__state, {})  # Get the qtable for the current state
+            max_q = max(q0, key=q0.get) if len(q0) > 0 else 0  # Get the max q value for the current state
+            return max_q
 
     def reset(self, append_score=True):
         if append_score:
@@ -48,6 +53,9 @@ class Agent:
         self.__score = 0
         self.is_over = False
         self.__environment.reset(self.__environment.height, self.__environment.width)
+
+    def heat(self):
+        self.__exploration = 1
 
     @property
     def environment(self):
@@ -77,6 +85,9 @@ class Agent:
     def print_board_if_needed(self, should_display_board):
         if should_display_board:
             self.__environment.print_board()
+
+    def get_exploration(self):
+        return self.__exploration
 
     def get_state(self):
         # The current state is the hash of :

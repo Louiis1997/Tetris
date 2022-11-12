@@ -86,3 +86,8 @@ class TetrisWindow(arcade.Window):
                 sprite.center_x, sprite.center_y = self.state_to_xy((row, column))
                 self.__board.append(sprite_border)
                 self.__board.append(sprite)
+
+    def on_key_press(self, key, modifiers):
+                    if key == arcade.key.H:
+                        self.__agent.heat()
+
