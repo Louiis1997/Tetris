@@ -97,7 +97,7 @@ class TetrisEnvironment:
 
     @property
     def current_piece_index(self):
-        return self.__current_piece_index + 1
+        return self.__current_piece_index
 
     @property
     def current_rotation(self):
@@ -110,14 +110,13 @@ class TetrisEnvironment:
         """Get the next piece"""
         if len(self.__current_bag_piece_index) == 0:
             self.create_shuffled_bag()
-        else:
-            self.__current_piece_index = self.__current_bag_piece_index.pop()
+        self.__current_piece_index = self.__current_bag_piece_index.pop()
         self.__current_piece = copy.deepcopy(self.__pieces[self.current_piece_index][0])
         return self.__current_piece
 
     def create_shuffled_bag(self):
         """Create a queue of shuffled pieces"""
-        piece_indexes_bag = list(range(len(self.__pieces)))
+        piece_indexes_bag = list(range(1, len(self.__pieces) + 1))
         # self.__current_bag_piece_index = random.sample(piece_indexes_bag, len(piece_indexes_bag))
         self.__current_bag_piece_index = piece_indexes_bag
 
@@ -152,35 +151,6 @@ class TetrisEnvironment:
                     self.__states[row, col] = WALL
                 elif item == 0:
                     self.__states[row, col] = EMPTY_BLOCK
-                col += 1
-            row += 1
-            col = 0
-
-    def update_states(self):
-        row = 0
-        col = 0
-        for line in self.__board:
-            for item in line:
-                if item > 0:
-                    if self.__states[row][col] == WALL:
-                        pass
-                    else:
-                        self.__states[row][col] = BLOCK
-                elif item == 0:
-                    self.__states[row][col] = EMPTY_BLOCK
-                col += 1
-            row += 1
-            col = 0
-
-    def add_piece_to_wall(self):
-        row = 0
-        col = 0
-        for line in self.__board:
-            for item in line:
-                if item > 0:
-                    self.__states[row][col] = WALL
-                elif item == 0:
-                    self.__states[row][col] = EMPTY_BLOCK
                 col += 1
             row += 1
             col = 0

@@ -106,42 +106,6 @@ class Agent:
                          self.__environment.get_current_piece().blocks[2].y)
         self.__state3 = (self.__environment.get_current_piece().blocks[3].x,
                          self.__environment.get_current_piece().blocks[3].y)
-        '''self.__state = (self.__state0, self.__state1, self.__state2, self.__state3)
-
-        if random.random() < self.__exploration:
-            action = random.choice(ACTIONS)
-        else:
-            action = self.best_action()
-
-        if action == ACTION_LEFT:
-            self.__environment.move_left(self.__environment.get_current_piece())
-        elif action == ACTION_RIGHT:
-            self.__environment.move_right(self.__environment.get_current_piece())
-        elif action == ACTION_ROTATE:
-            self.__environment.rotate(self.__environment.get_current_piece())
-        elif action == ACTION_NONE:
-            pass
-        else:
-            raise ValueError(f"Unknown action {action}")
-
-        reward = 0
-        if self.safe_move_down(self.__environment.get_current_piece()) is False:
-            reward = -1
-            self.is_over = True
-            self.__environment.add_piece(self.__environment.get_current_piece())
-            self.__environment.remove_full_lines()
-            self.__environment.generate_new_piece()
-            self.__environment.print_board()
-            self.__exploration *= self.__cooling_rate
-            self.reset()
-
-        maxQ = max(self.__qtable[self.__state].values())
-        delta = self.__alpha * (reward + self.__gamma * maxQ - self.__qtable[self.__state][action])
-        self.__qtable[self.__state][action] += delta
-
-        self.__score += reward
-
-        return action, reward'''
         action = self.best_action()
         current_piece, reward = self.__environment.do(action)
 
