@@ -3,11 +3,16 @@ import random
 
 from src.game.tetrominos.piece import Piece
 
-ACTION_LEFT = 'L'
-ACTION_RIGHT = 'R'
-ACTION_ROTATE = 'U'
-ACTION_NONE = 'N'
-ACTIONS = [ACTION_LEFT, ACTION_RIGHT, ACTION_ROTATE, ACTION_NONE]
+LEFT = 'L'
+RIGHT = 'R'
+ROTATE = 'U'
+NONE = 'N'
+ACTIONS = {
+    LEFT,
+    RIGHT,
+    ROTATE,
+    NONE
+}
 
 
 def clear_console():
@@ -20,10 +25,6 @@ class Agent:
         self.__environment = environment
         self.reset(False)
         self.__qtable = {}
-        for state in environment.states:
-            self.__qtable[state] = {}
-            for action in ACTIONS:
-                self.__qtable[state][action] = 0.0
         self.__alpha = alpha
         self.__gamma = gamma
         self.__exploration = exploration
@@ -31,33 +32,19 @@ class Agent:
 
         self.__history = []
         self.__state = None
-        self.__state0 = None
-        self.__state1 = None
-        self.__state2 = None
-        self.__state3 = None
         self.__score = 0
 
         self.is_over = False
 
     def best_action(self):
-        q0 = self.__qtable[self.__state0]
-        q1 = self.__qtable[self.__state1]
-        q2 = self.__qtable[self.__state2]
-        q3 = self.__qtable[self.__state3]
-        max_q0 = max(q0, key=q0.get)
-        max_q1 = max(q1, key=q1.get)
-        max_q2 = max(q2, key=q2.get)
-        max_q3 = max(q3, key=q3.get)
-        return max(max_q0, max_q1, max_q2, max_q3)
+        q0 = self.__qtable.get(self.__state, {})  # Get the qtable for the current state
+        max_q = max(q0, key=q0.get) if len(q0) > 0 else 0  # Get the max q value for the current state
+        return max_q
 
     def reset(self, append_score=True):
         if append_score:
             self.__history.append(self.__score)
         self.__state = None
-        self.__state0 = None
-        self.__state1 = None
-        self.__state2 = None
-        self.__state3 = None
         self.__score = 0
         self.is_over = False
         self.__environment.reset(self.__environment.height, self.__environment.width)
@@ -91,6 +78,27 @@ class Agent:
         if should_display_board:
             self.__environment.print_board()
 
+    def get_state(self):
+        # The current state is the hash of :
+        #   - The current piece (piece and rotation)
+        #   - The radar under the current piece
+        #   - The y position of the current piece on the board
+        current_piece = self.__environment.get_current_piece()
+        radar = self.__environment.states
+        ys = [block.y for block in current_piece.blocks]
+
+        return hash((current_piece, tuple(radar), tuple(ys)))
+
+    def update_qtable(self, action, rewards):
+        # 𝑄(𝑠t,𝑎t) ⟵ 𝑄(𝑠t,𝑎t) + 𝛼[𝑟+1 + 𝛾𝑄(𝑠t+1, 𝑎t+1) − 𝑄(𝑠t,𝑎t)]
+        if self.__qtable.get(self.__state, 0) == 0:
+            self.__qtable[self.__state] = {}
+            self.__qtable[self.__state][action] = 0.0
+
+        maxQ = max(self.__qtable[self.__state].values())
+        delta = self.__alpha * (rewards + self.__gamma * maxQ - self.__qtable[self.__state][action])
+        self.__qtable[self.__state][action] += delta
+
     def step(self):
         """Do a step"""
         # TODO -> Implement reinforcement learning
@@ -98,20 +106,16 @@ class Agent:
         # OR
         # TODO      -> Implement Neural Network
         # TODO      -> BEST OPTION -> BOTH
-        self.__state0 = (self.__environment.get_current_piece().blocks[0].x,
-                         self.__environment.get_current_piece().blocks[0].y)
-        self.__state1 = (self.__environment.get_current_piece().blocks[1].x,
-                         self.__environment.get_current_piece().blocks[1].y)
-        self.__state2 = (self.__environment.get_current_piece().blocks[2].x,
-                         self.__environment.get_current_piece().blocks[2].y)
-        self.__state3 = (self.__environment.get_current_piece().blocks[3].x,
-                         self.__environment.get_current_piece().blocks[3].y)
+        self.__state = self.get_state()
+
         action = self.best_action()
-        current_piece, reward = self.__environment.do(action)
+        current_piece, rewards = self.__environment.do(action)
+        self.__environment.__current_piece = current_piece
+        self.update_qtable(action, rewards)
 
         if self.safe_move_down(current_piece) is False:
-            self.__environment.add_piece_to_wall()
             self.__environment.clear_lines()
+
             current_piece = self.__environment.next_piece()
             self.__environment.place_piece_at_base_position(current_piece)
             if self.__environment.entering_in_collision(current_piece, True, False, False) is True:

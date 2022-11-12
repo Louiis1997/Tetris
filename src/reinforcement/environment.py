@@ -1,12 +1,10 @@
 import copy
-import random
-from typing import List
 
 from src.game.tetrominos.piece import Piece
-from src.reinforcement.agent import clear_console
+from src.reinforcement.agent import clear_console, ACTIONS, LEFT, RIGHT, ROTATE, NONE
 
 EMPTY_BLOCK = 0
-BLOCK = 1
+CURRENT_PIECE_BLOCK = 1
 WALL = 2
 
 
@@ -17,14 +15,6 @@ class TetrisEnvironment:
         self.__pieces = pieces
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
         self.__states = {}
-        row = 0
-        col = 0
-        for line in self.__board:
-            for item in line:
-                self.__states[row, col] = item
-                col += 1
-            row += 1
-            col = 0
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
@@ -32,20 +22,33 @@ class TetrisEnvironment:
         self.__current_rotation = None
         self.__reward_clear_line = 100
 
+    def get_lowest_x_for_states_by_current_piece(self):
+        x = 0
+        for block in self.get_current_piece().blocks:
+            if x > block.x:
+                x = block.x
+        return x
+
+    def update_states_for_current_board(self):
+        # Add next 3 lines (without edges) to the states
+        states_first_line_x_coordinate = self.get_lowest_x_for_states_by_current_piece()
+        for x in range(states_first_line_x_coordinate, states_first_line_x_coordinate + 3):
+            for y in range(1, len(self.__board[x])):
+                board_value = self.__board[x][y]
+                if board_value == EMPTY_BLOCK:
+                    self.__states[x, y] = EMPTY_BLOCK
+                else:
+                    self.__states[x, y] = WALL
+
+        # Add current pieces to the states
+        for block in self.__current_piece.blocks:
+            self.__states[block.x, block.y] = CURRENT_PIECE_BLOCK
+
     def reset(self, height, width):
         """Resets the game and returns the current state"""
         self.__height = height
         self.__width = width
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
-        self.__states = {}
-        row = 0
-        col = 0
-        for line in self.__board:
-            for item in line:
-                self.__states[row, col] = item
-                col += 1
-            row += 1
-            col = 0
         # Fill the board with pieces
         # for i in range(5, self.__height):
         #     for j in range(0, self.__width):
@@ -61,6 +64,9 @@ class TetrisEnvironment:
         self.__current_rotation = 0
 
         self.new_round()
+
+        self.__states = {}  # Use as a radar for 3 lines under the current piece
+        self.update_states_for_current_board()
 
     def new_round(self):
         """Starts a new round with a new piece and renew the bag of pieces if needed"""
@@ -81,7 +87,7 @@ class TetrisEnvironment:
 
     @property
     def states(self):
-        return list(self.__states.keys())
+        return self.__states
 
     @property
     def height(self):
@@ -124,36 +130,7 @@ class TetrisEnvironment:
         """Place the piece in the board"""
         for block in piece.blocks:
             self.__board[block.x][block.y] = piece.grid_representation
-            self.update_states()
-
-    def update_states(self):
-        row = 0
-        col = 0
-        for line in self.__board:
-            for item in line:
-                if item > 0:
-                    if self.__states[row, col] == WALL:
-                        pass
-                    else:
-                        self.__states[row, col] = BLOCK
-                elif item == 0:
-                    self.__states[row, col] = EMPTY_BLOCK
-                col += 1
-            row += 1
-            col = 0
-
-    def add_piece_to_wall(self):
-        row = 0
-        col = 0
-        for line in self.__board:
-            for item in line:
-                if item > 0:
-                    self.__states[row, col] = WALL
-                elif item == 0:
-                    self.__states[row, col] = EMPTY_BLOCK
-                col += 1
-            row += 1
-            col = 0
+            self.update_states_for_current_board()
 
     def place_piece_at_base_position(self, piece: Piece):
         """Place a piece on the board"""
@@ -162,7 +139,7 @@ class TetrisEnvironment:
             block.x = block.x
             block.y = block.y + piece.current_matrix_position_in_board[1]
             self.__board[block.x][block.y] = piece.grid_representation
-            self.update_states()
+            self.update_states_for_current_board()
 
     @staticmethod
     def is_touching_itself(piece, x, y) -> bool:
@@ -246,13 +223,15 @@ class TetrisEnvironment:
         self.__current_piece = next_rotated_piece
         return next_rotated_piece
 
-    def clear_lines(self):
+    def clear_lines(self) -> int:
         """Clears the lines"""
+        line_clear_count = 0
         for row in self.__board:
             if all(block != EMPTY_BLOCK for block in row):
                 self.__board.remove(row)
                 self.__board.insert(0, [EMPTY_BLOCK] * self.__width)
-                self.update_states()
+                line_clear_count += 1
+        return line_clear_count
 
     def safe_move_left(self, current_piece: Piece) -> bool:
         """Move left if possible"""
@@ -277,36 +256,43 @@ class TetrisEnvironment:
             return self.rotate(current_piece, next_rotated_piece)
         return current_piece
 
-    def do(self, action):
+    def compute_line_cleared_reward(self, cleared_lines_count):
+        if cleared_lines_count == 1:
+                return 100
+        elif cleared_lines_count == 2:
+            return 300
+        elif cleared_lines_count == 3:
+            return 500
+        elif cleared_lines_count == 4:
+            return 800
+        elif cleared_lines_count > 4:
+            return 1500
+        return 0
+
+    def compute_rewards(self, cleared_lines_count):
+        rewards = 0
+        rewards += self.compute_line_cleared_reward(cleared_lines_count)
+        return rewards
+
+    def do(self, action: ACTIONS):
         current_piece = self.get_current_piece()
-        if action == 'L':
+        if action == LEFT:
             self.safe_move_left(current_piece)
-        elif action == 'R':
+        elif action == RIGHT:
             self.safe_move_right(current_piece)
-        elif action == 'U':
+        elif action == ROTATE:
             self.safe_rotate(current_piece)
-        elif action == 'N':
+        elif action == NONE:
             pass
 
+        rewards = 0
         if self.entering_in_collision(current_piece, True, False, False) is True:
+            # The more lines cleared, the more reward
             for row in self.__board:
                 if all(block != EMPTY_BLOCK for block in row):
-                    reward = self.__reward_clear_line
-            reward = self.__height - (self.__height - current_piece.blocks[3].x)
-        else:
-            reward = 0
+                    rewards += self.__reward_clear_line
+            # The height of the current piece reward
+            rewards = sum([block.x for block in current_piece.blocks]) - self.__height
+            print("Rewards : ", rewards)
 
-        '''should_rotate = random.randint(0, 1)
-        if should_rotate:
-            current_piece = self.safe_rotate(current_piece)
-        # Make a random move for now
-        left_or_right = random.randint(0, 1)
-        number_of_times = random.randint(1, 6)
-         for _ in range(number_of_times):
-            if left_or_right == 0:
-                self.safe_move_left(current_piece)
-            else:
-                for _ in range(number_of_times):
-                    self.safe_move_right(current_piece)'''
-
-        return current_piece, reward
+        return current_piece, rewards
