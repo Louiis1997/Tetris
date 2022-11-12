@@ -13,8 +13,8 @@ COLUMN_COUNT = 10
 PIECES = TetrominosFactory.create_tetrominos()
 
 if __name__ == '__main__':
-    wants_graphic_interface = False
-    wants_to_display_board = True
+    wants_graphic_interface = True
+    wants_to_display_board = False
 
     env = TetrisEnvironment(LINE_COUNT, COLUMN_COUNT, PIECES)
     agent = Agent(env, wants_to_display_board)

@@ -195,3 +195,44 @@ class TetrisEnvironment:
             if all(block != EMPTY_BLOCK for block in row):
                 self.__board.remove(row)
                 self.__board.insert(0, [EMPTY_BLOCK] * self.__width)
+
+    def safe_move_left(self, current_piece: Piece) -> bool:
+        """Move left if possible"""
+        if self.entering_in_collision(current_piece, False, True, False) is False:
+            self.move_left(current_piece)
+            return True
+        return False
+
+    def safe_move_right(self, current_piece: Piece) -> bool:
+        """Move right if possible"""
+        if self.entering_in_collision(current_piece, False, False, True) is False:
+            self.move_right(current_piece)
+            return True
+        return False
+
+    def safe_rotate(self, current_piece: Piece) -> Piece:
+        """Rotate if possible"""
+        next_rotated_piece = current_piece.get_next_rotated_piece(self.current_rotation,
+                                                                  self.pieces,
+                                                                  self.current_piece_index)
+        if self.entering_in_collision(next_rotated_piece, False, False, False, current_piece) is False:
+            return self.rotate(current_piece, next_rotated_piece)
+        return current_piece
+
+    def do(self):
+        current_piece = self.get_current_piece()
+
+        should_rotate = random.randint(0, 1)
+        if should_rotate:
+            current_piece = self.safe_rotate(current_piece)
+        # Make a random move for now
+        left_or_right = random.randint(0, 1)
+        number_of_times = random.randint(1, 6)
+        for _ in range(number_of_times):
+            if left_or_right == 0:
+                self.safe_move_left(current_piece)
+            else:
+                for _ in range(number_of_times):
+                    self.safe_move_right(current_piece)
+
+        return current_piece
