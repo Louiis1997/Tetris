@@ -6,6 +6,7 @@ from src.reinforcement.environment import EMPTY_BLOCK
 
 SPRITE_SIZE = 40
 
+FILE_AGENT = '../save/agent.al1'
 
 class TetrisWindow(arcade.Window):
     def __init__(self, agent, should_display_board=False):
@@ -58,6 +59,7 @@ class TetrisWindow(arcade.Window):
             10, 10, arcade.csscolor.WHITE, 20)
 
     def on_update(self, delta_time):
+        self.__agent.save(FILE_AGENT)
         if not self.__agent.is_over:
             self.__agent.step()
             self.__agent.print_board_if_needed(self.__should_display_board)
@@ -66,6 +68,7 @@ class TetrisWindow(arcade.Window):
             time.sleep(0.5)
             self.__agent.reset()
             self.__iteration += 1
+        self.__agent.save(FILE_AGENT)
 
     def get_color_from_grid_representation(self, grid_representation):
         """ Get the color of a grid representation. """

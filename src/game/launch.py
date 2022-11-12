@@ -1,3 +1,4 @@
+import os
 import time
 
 import arcade
@@ -12,6 +13,8 @@ COLUMN_COUNT = 10
 
 PIECES = TetrominosFactory.create_tetrominos()
 
+FILE_AGENT = '../save/agent.al1'
+
 if __name__ == '__main__':
     wants_graphic_interface = True
     wants_to_display_board = False
@@ -19,10 +22,14 @@ if __name__ == '__main__':
     env = TetrisEnvironment(LINE_COUNT, COLUMN_COUNT, PIECES)
     agent = Agent(env)
 
+    if os.path.exists(FILE_AGENT):
+        agent.load(FILE_AGENT)
+
     if wants_graphic_interface:
         window = TetrisWindow(agent, wants_to_display_board)
         window.setup()
         arcade.run()
+
     else:
         iteration_wanted = 50
         iteration = 0
@@ -32,6 +39,7 @@ if __name__ == '__main__':
             while not agent.is_over:
                 agent.step()
                 agent.print_board_if_needed(wants_to_display_board)
+                agent.save(FILE_AGENT)
                 time.sleep(0.2)
             agent.reset()
             iteration += 1

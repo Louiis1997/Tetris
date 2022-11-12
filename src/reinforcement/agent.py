@@ -1,4 +1,5 @@
 import os
+import pickle
 from random import choice, random
 
 from src.game.tetrominos.piece import Piece
@@ -74,6 +75,14 @@ class Agent:
     @property
     def exploration(self):
         return self.__exploration
+
+    def load(self, filename):
+        with open(filename, 'rb') as file:
+            self.__qtable, self.__history = pickle.load(file)
+
+    def save(self, filename):
+        with open(filename, 'wb') as file:
+            pickle.dump((self.__qtable, self.__history), file)
 
     def safe_move_down(self, current_piece: Piece) -> bool:
         """Move down if possible"""
