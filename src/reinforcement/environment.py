@@ -22,7 +22,7 @@ class TetrisEnvironment:
         self.__current_piece = None
         self.__current_rotation = None
         self.__reward_clear_line = 1000
-        self.__reward_bumpiness = -20
+        self.__reward_bumpiness = -10
         self.__reward_new_holes = -50
 
     def get_lowest_x_for_states_by_current_piece(self):
@@ -297,31 +297,46 @@ class TetrisEnvironment:
         # The height of the current piece reward
         return rewards
 
-    def get_column_height(self, col):
+    def get_column_height(self, col, board):
         """Returns the height of the given column"""
         height = 0
         for row in range(self.__height):
-            if self.__board[row][col] != EMPTY_BLOCK:
+            if board[row][col] != EMPTY_BLOCK:
                 height = self.__height - row
                 break
         return height
 
-    def compute_bumpiness(self):
+    def get_previous_bumpiness(self):
+        """Sum of the absolute differences between the heights of adjacent columns from board without current piece"""
+        total_bumpiness = 0
+
+        for col in range(self.__width - 1):
+            bumpiness = abs(
+                self.get_column_height(col, self.get_board_without_current_piece(
+                    self.get_current_piece())) - self.get_column_height(col + 1, self.get_board_without_current_piece(
+                    self.get_current_piece()))
+            )
+            total_bumpiness += bumpiness
+
+        return total_bumpiness
+
+    def get_current_bumpiness(self):
         """Sum of the absolute differences between the heights of adjacent columns"""
         total_bumpiness = 0
 
         for col in range(self.__width - 1):
-            bumpiness = abs(self.get_column_height(col) - self.get_column_height(col + 1))
+            bumpiness = abs(self.get_column_height(col, self.__board) - self.get_column_height(col + 1, self.__board))
             total_bumpiness += bumpiness
 
         return total_bumpiness
 
     def compute_bumpiness_reward(self):
-        bumpiness = self.compute_bumpiness()
-        return self.__reward_bumpiness * bumpiness
+        previous_bumpiness = self.get_previous_bumpiness()
+        bumpiness = self.get_current_bumpiness()
+        return self.__reward_bumpiness * (bumpiness - previous_bumpiness)
 
     def compute_piece_height_reward(self):
-        return sum([block.x - 10 for block in self.get_current_piece().blocks])
+        return sum([(block.x + 1) - 10 for block in self.get_current_piece().blocks])
 
     def get_old_holes_count(self):
         old_board = self.get_board_without_current_piece(self.get_current_piece())
@@ -353,11 +368,23 @@ class TetrisEnvironment:
 
     def compute_rewards(self):
         rewards = 0
+
         line_cleared_reward = self.compute_line_cleared_reward()
-        bumpiness_reward = self.compute_bumpiness_reward()
+        # print("line_cleared_reward: ", line_cleared_reward)
+        rewards += line_cleared_reward
+
         piece_height_reward = self.compute_piece_height_reward()
+        # print("piece_height_reward: ", piece_height_reward)
+        rewards += piece_height_reward
+
         holes_reward = self.compute_holes_reward()
-        rewards += line_cleared_reward + bumpiness_reward + piece_height_reward + holes_reward
+        # print("holes_reward: ", holes_reward)
+        rewards += holes_reward
+
+        bumpiness_reward = self.compute_bumpiness_reward()
+        # print("bumpiness_reward: ", bumpiness_reward)
+        rewards += bumpiness_reward
+
         return rewards
 
     def do(self, action: ACTIONS):

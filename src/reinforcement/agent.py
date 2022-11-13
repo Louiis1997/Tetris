@@ -12,7 +12,7 @@ ACTIONS = {
     LEFT: 'L',
     RIGHT: 'R',
     ROTATE: 'U',
-    NONE: 'N'
+    NONE: 'N',
 }
 
 
@@ -51,8 +51,6 @@ class Agent:
             return choice(list(ACTIONS.values()))
 
         max_q = max(q0, key=q0.get) if len(q0) > 0 else 0  # Get the max q value for the current state
-        print(f"Chose action : {max_q}, with q value : {self.__qtable[self.__state]}")
-
         return max_q
 
     def reset(self, append_score=True):
@@ -80,11 +78,19 @@ class Agent:
 
     def load(self, filename):
         with open(filename, 'rb') as file:
-            self.__qtable, self.__history = pickle.load(file)
+            try:
+                self.__qtable, self.__history = pickle.load(file)
+            except EOFError:
+                print("/!\\ The file is empty")
+            except Exception as e:
+                print(f"/!\\ Error while loading the file : {e}")
+
+            file.close()
 
     def save(self, filename):
         with open(filename, 'wb') as file:
             pickle.dump((self.__qtable, self.__history), file)
+            file.close()
 
     def safe_move_down(self, current_piece: Piece) -> bool:
         """Move down if possible"""
@@ -118,7 +124,6 @@ class Agent:
         delta = self.__alpha * (rewards + self.__gamma * maxQ - self.__qtable[self.__state][action])
         self.__qtable[self.__state][action] += delta
 
-
     def set_current_piece(self, current_piece):
         self.__environment.set_current_piece(current_piece)
 
@@ -141,6 +146,8 @@ class Agent:
             current_piece, rewards = self.__environment.do(action)
             self.__score += rewards
             self.set_current_piece(current_piece)
+            if self.__environment.entering_in_collision(current_piece, True, False, False) is True:
+                break
 
         if self.safe_move_down(self.get_current_piece()) is False:
             self.update_qtable(action, rewards)

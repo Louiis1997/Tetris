@@ -3,9 +3,11 @@ import time
 import arcade
 
 from src.reinforcement.environment import EMPTY_BLOCK
+
 FILE_AGENT = '../save/agent.al1'
 
 SPRITE_SIZE = 40
+
 
 class TetrisWindow(arcade.Window):
     def __init__(self, agent, should_display_board=False):
@@ -62,7 +64,7 @@ class TetrisWindow(arcade.Window):
         if not self.__agent.is_over:
             self.__agent.step()
             self.__agent.print_board_if_needed(self.__should_display_board)
-            time.sleep(0.01)
+            time.sleep(0.001)
         else:
             time.sleep(0.5)
             self.__agent.reset()
@@ -90,6 +92,5 @@ class TetrisWindow(arcade.Window):
                 self.__board.append(sprite)
 
     def on_key_press(self, key, modifiers):
-                    if key == arcade.key.H:
-                        self.__agent.heat()
-
+        if key == arcade.key.H:
+            self.__agent.heat()
