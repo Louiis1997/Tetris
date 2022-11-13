@@ -1,10 +1,13 @@
 import time
+from datetime import datetime
 
 import arcade
 
 from src.reinforcement.environment import EMPTY_BLOCK
 
-FILE_AGENT = '../save/agent.al1'
+# Using datetime
+TRAINING_FILE_NAME = 'training_{}'.format(datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+FILE_AGENT = '../save/' + TRAINING_FILE_NAME
 
 SPRITE_SIZE = 40
 

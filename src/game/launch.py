@@ -13,12 +13,12 @@ COLUMN_COUNT = 10
 PIECES = TetrominosFactory.create_tetrominos()
 
 if __name__ == '__main__':
-    iteration_wanted = 10
+    iteration_wanted = 150
     wants_graphic_interface = True
     wants_to_display_board = False
 
     env = TetrisEnvironment(LINE_COUNT, COLUMN_COUNT, PIECES)
-    agent = Agent(env, alpha=0.5, gamma=0.9, exploration=1, cooling_rate=0.99)
+    agent = Agent(env, alpha=0.5, gamma=0.9, exploration=0.1, cooling_rate=0.99)
 
     if os.path.exists(FILE_AGENT):
         agent.load(FILE_AGENT)
