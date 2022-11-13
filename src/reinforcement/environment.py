@@ -170,8 +170,6 @@ class TetrisEnvironment:
         for block in piece.blocks:
             block.x = block.x
             block.y = block.y + piece.current_matrix_position_in_board[1]
-            self.__board[block.x][block.y] = piece.grid_representation
-        self.update_states_for_current_board(piece)
 
     @staticmethod
     def is_touching_itself(piece, x, y) -> bool:
@@ -193,11 +191,11 @@ class TetrisEnvironment:
         return board_without_current_piece
 
     def entering_in_collision(self, next_piece_position, down, left, right,
-                              previous_rotated_piece: Piece = None) -> bool:
+                              previous_rotated_piece: Piece = None, without_current_piece: bool = True) -> bool:
         """Checks if the piece collides with pieces in current board"""
         for block in next_piece_position.blocks:  # y => row, x => column
             x = block.x + 1 if down else block.x
-            y = block.y + 1 if right else block.y - 1 if left else block.y
+            y = block.y + 1 if right else (block.y - 1 if left else block.y)
 
             if x >= self.__height:
                 # print("Collision detected -> down -> touched the bottom")
@@ -211,9 +209,12 @@ class TetrisEnvironment:
                 # print("Collision detected -> left -> touched the left wall")
                 return True
 
-            simulated_board_without_current_pieces = self.get_board_without_current_piece(
-                previous_rotated_piece if previous_rotated_piece else next_piece_position)
-            simulated_next_position_value = simulated_board_without_current_pieces[x][y]
+            if without_current_piece:
+                board = self.get_board_without_current_piece(
+                    previous_rotated_piece if previous_rotated_piece else next_piece_position)
+            else:
+                board = self.__board
+            simulated_next_position_value = board[x][y]
             if simulated_next_position_value != EMPTY_BLOCK:
                 return True
 
@@ -336,7 +337,8 @@ class TetrisEnvironment:
         return self.__reward_bumpiness * (bumpiness - previous_bumpiness)
 
     def compute_piece_height_reward(self):
-        return sum([(block.x + 1) - 10 for block in self.get_current_piece().blocks])
+        return math.floor(sum([(block.x + 1) for block in self.get_current_piece().blocks]) / (
+                    len(self.get_current_piece().blocks) / 2))
 
     def get_old_holes_count(self):
         old_board = self.get_board_without_current_piece(self.get_current_piece())

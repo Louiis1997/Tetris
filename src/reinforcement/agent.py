@@ -150,11 +150,14 @@ class Agent:
                 break
 
         if self.safe_move_down(self.get_current_piece()) is False:
+            # print("Q-table value : ", self.__qtable[self.__state])
             self.update_qtable(action, rewards)
             self.__environment.clear_lines()
 
-            self.set_current_piece(self.__environment.next_piece())
+            self.__environment.next_piece()
             self.__environment.place_piece_at_base_position(self.get_current_piece())
-            if self.__environment.entering_in_collision(self.get_current_piece(), True, False, False) is True:
+
+            if self.__environment.entering_in_collision(self.get_current_piece(), down=False, left=False, right=False, without_current_piece=False) is True:
                 self.is_over = True
-            return
+                return
+            self.__environment.place_piece_in_board(self.get_current_piece())
