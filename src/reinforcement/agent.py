@@ -20,7 +20,6 @@ def clear_console():
     """Clear console"""
     os.system('cls' if os.name == 'nt' else 'clear')
 
-
 class Agent:
     def __init__(self, environment, alpha=1, gamma=1, exploration=0, cooling_rate=0.99):
         self.__environment = environment
@@ -75,6 +74,10 @@ class Agent:
     @property
     def exploration(self):
         return self.__exploration
+
+    @property
+    def history(self):
+        return self.__history
 
     def load(self, filename):
         with open(filename, 'rb') as file:
@@ -157,7 +160,8 @@ class Agent:
             self.__environment.next_piece()
             self.__environment.place_piece_at_base_position(self.get_current_piece())
 
-            if self.__environment.entering_in_collision(self.get_current_piece(), down=False, left=False, right=False, without_current_piece=False) is True:
+            if self.__environment.entering_in_collision(self.get_current_piece(), down=False, left=False, right=False,
+                                                        without_current_piece=False) is True:
                 self.is_over = True
                 return
             self.__environment.place_piece_in_board(self.get_current_piece())

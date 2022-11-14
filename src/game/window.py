@@ -1,3 +1,5 @@
+import glob
+import os
 import time
 from datetime import datetime
 
@@ -6,10 +8,29 @@ import arcade
 from src.reinforcement.environment import EMPTY_BLOCK
 
 # Using datetime
-TRAINING_FILE_NAME = 'training_{}'.format(datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-FILE_AGENT = '../save/' + TRAINING_FILE_NAME
+SAVE_FOLDER = '../save/'
+SAVE_FILES = SAVE_FOLDER + '*'
 
 SPRITE_SIZE = 40
+
+WANTS_NEW_SAVE_FILE = False
+
+
+def most_recent_save(files_path):
+    if len(os.listdir(SAVE_FOLDER)) != 0:
+        files = glob.glob(files_path)
+        latest_save_file = max(files, key=os.path.getctime)
+        return latest_save_file
+    return '../save/training_{}'.format(datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+
+
+def get_filename(files_path, is_new_save_file):
+    file = most_recent_save(files_path)
+    if not is_new_save_file:
+        if os.path.exists(file) and os.stat(file).st_size != 0:
+            return file
+
+    return '../save/training_{}'.format(datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 
 class TetrisWindow(arcade.Window):
@@ -62,8 +83,11 @@ class TetrisWindow(arcade.Window):
             f"#{self.__iteration:04d} Score : {self.__agent.score:.2f} T°C : {self.__agent.exploration * 100:.2f}",
             10, 10, arcade.csscolor.WHITE, 20)
 
+    FILENAME = get_filename(SAVE_FILES, WANTS_NEW_SAVE_FILE)
+
     def on_update(self, delta_time):
-        self.__agent.save(FILE_AGENT)
+        filename = get_filename(SAVE_FILES, WANTS_NEW_SAVE_FILE)
+        self.__agent.save(filename)
         if not self.__agent.is_over:
             self.__agent.step()
             self.__agent.print_board_if_needed(self.__should_display_board)
@@ -72,7 +96,6 @@ class TetrisWindow(arcade.Window):
             time.sleep(0.5)
             self.__agent.reset()
             self.__iteration += 1
-        self.__agent.save(FILE_AGENT)
 
     def get_color_from_grid_representation(self, grid_representation):
         """ Get the color of a grid representation. """
