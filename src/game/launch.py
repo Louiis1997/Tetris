@@ -33,7 +33,6 @@ if __name__ == '__main__':
         window = TetrisWindow(agent, wants_to_display_board)
         window.setup()
         arcade.run()
-        agent.save(filename)
 
     else:
         iteration = 0
@@ -45,6 +44,6 @@ if __name__ == '__main__':
                 agent.print_board_if_needed(wants_to_display_board)
             iteration += 1
             clear_console()
-            agent.reset()
             agent.save(filename)
+            agent.reset()
             print(f"#{iteration:04d} Score : {agent.score:.2f} T°C : {agent.exploration:.2f}")

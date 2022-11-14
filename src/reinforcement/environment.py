@@ -15,15 +15,19 @@ class TetrisEnvironment:
         self.__width = width
         self.__pieces = pieces
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
-        self.__states = {}
+        self.__radar_states_1 = {}
+        self.__radar_states_2 = {}
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
         self.__current_piece = None
         self.__current_rotation = None
-        self.__reward_clear_line = 1000
+        self.__reward_piece_height = 1
+        self.__reward_clear_line = 500
         self.__reward_bumpiness = -10
         self.__reward_new_holes = -50
+        self.__reward_cannot_move_left = -10
+        self.__reward_cannot_move_right = -10
 
     def get_lowest_x_for_states_by_current_piece(self):
         x = 0
@@ -36,41 +40,37 @@ class TetrisEnvironment:
         """Update the radar for the current board"""
         if current_piece is None:
             return
+
         # Add next 3 lines (without edges) to the states
         imaginary_matrix_size = 4
-        radar_width = 6
-        if radar_width > self.width:
-            raise Exception("Radar width is bigger than the board width")
+        radar_width = 4
+
+        difference = math.floor(radar_width / 2)
+        left_overflow = radar_width - difference
 
         states_first_line_x_coordinate = self.get_lowest_x_for_states_by_current_piece()
         for x in range(states_first_line_x_coordinate, states_first_line_x_coordinate + 3):
             # 10 * 28 * 2^(3*6)
-            if x < len(self.__board):
-                difference = radar_width - imaginary_matrix_size
-                left_overflow = math.floor(difference / 2)
-                right_overflow = math.ceil(difference / 2)
+            if x > len(self.__board):
+                self.__radar_states_1[x] = [WALL for _ in range(radar_width)]
+                self.__radar_states_2[x] = [WALL for _ in range(radar_width)]
 
-                radar_y_start = current_piece.current_matrix_position_in_board[1] - left_overflow
-                radar_y_end = current_piece.current_matrix_position_in_board[1] + imaginary_matrix_size + right_overflow
+            radar_1_y_start = current_piece.current_matrix_position_in_board[1] - left_overflow
+            radar_1_y_end = radar_1_y_start + (radar_width - 1)
+            radar_2_y_start = radar_1_y_end + 1
+            radar_2_y_end = radar_2_y_start + (radar_width - 1)
 
-                if radar_y_start < 0:
-                    radar_y_start = 0
-                    radar_y_end = radar_width - 1
+            for y in range(radar_1_y_start, radar_1_y_end):
+                if y < 0 or y >= len(self.__board[x]):
+                    self.__radar_states_1[x, y] = WALL
+                else:
+                    self.__radar_states_1[x, y] = WALL if self.__board[x][y] != EMPTY_BLOCK else EMPTY_BLOCK
 
-                if radar_y_end > self.width - 1:
-                    radar_y_start = (self.width - 1) - radar_width
-                    radar_y_end = self.width - 1
-
-                for y in range(radar_y_start, radar_y_end + 1):
-                    board_value = self.__board[x][y]
-                    if board_value == EMPTY_BLOCK:
-                        self.__states[x, y] = EMPTY_BLOCK
-                    else:
-                        self.__states[x, y] = WALL
-
-        # Add current pieces to the states
-        for block in self.get_current_piece().blocks:
-            self.__states[block.x, block.y] = CURRENT_PIECE_BLOCK
+            for y in range(radar_2_y_start, radar_2_y_end):
+                if y < 0 or y >= len(self.__board[x]):
+                    self.__radar_states_2[x, y] = WALL
+                else:
+                    self.__radar_states_2[x, y] = WALL if self.__board[x][y] != EMPTY_BLOCK else EMPTY_BLOCK
 
     def reset(self, height, width):
         """Resets the game and returns the current state"""
@@ -93,7 +93,8 @@ class TetrisEnvironment:
 
         self.new_round()
 
-        self.__states = {}  # Use as a radar for 3 lines under the current piece
+        self.__radar_states_1 = {}
+        self.__radar_states_2 = {}
         self.update_states_for_current_board()
 
     def new_round(self):
@@ -114,8 +115,12 @@ class TetrisEnvironment:
         return self.__board
 
     @property
-    def states(self):
-        return self.__states
+    def states_1(self):
+        return self.__radar_states_1
+
+    @property
+    def states_2(self):
+        return self.__radar_states_2
 
     @property
     def height(self):
@@ -337,8 +342,9 @@ class TetrisEnvironment:
         return self.__reward_bumpiness * (bumpiness - previous_bumpiness)
 
     def compute_piece_height_reward(self):
-        return math.floor(sum([(block.x + 1) for block in self.get_current_piece().blocks]) / (
-                    len(self.get_current_piece().blocks) / 2))
+        return math.floor(
+            sum([(block.x - self.height) for block in
+                 self.get_current_piece().blocks]) * self.__reward_piece_height)
 
     def get_old_holes_count(self):
         old_board = self.get_board_without_current_piece(self.get_current_piece())
@@ -368,7 +374,15 @@ class TetrisEnvironment:
     def compute_holes_reward(self):
         return self.__reward_new_holes * self.get_new_holes_count()
 
-    def compute_rewards(self):
+    def compute_cannot_make_lateral_reward(self, has_moved_left, has_moved_right):
+        reward = 0
+        if has_moved_left is False:
+            reward += self.__reward_cannot_move_left
+        if has_moved_right is False:
+            reward += self.__reward_cannot_move_right
+        return reward
+
+    def compute_rewards(self, has_moved_left, has_moved_right):
         rewards = 0
 
         line_cleared_reward = self.compute_line_cleared_reward()
@@ -387,14 +401,19 @@ class TetrisEnvironment:
         # print("bumpiness_reward: ", bumpiness_reward)
         rewards += bumpiness_reward
 
+        cannot_make_lateral_move_reward = self.compute_cannot_make_lateral_reward(has_moved_left, has_moved_right)
+        rewards += cannot_make_lateral_move_reward
+
         return rewards
 
     def do(self, action: ACTIONS):
         current_piece = self.get_current_piece()
+        has_moved_left = False
+        has_moved_right = False
         if action == LEFT:
-            self.safe_move_left(current_piece)
+            has_moved_left = self.safe_move_left(current_piece)
         elif action == RIGHT:
-            self.safe_move_right(current_piece)
+            has_moved_right = self.safe_move_right(current_piece)
         elif action == ROTATE:
             current_piece = self.safe_rotate(current_piece)
         elif action == NONE:
@@ -402,6 +421,6 @@ class TetrisEnvironment:
 
         rewards = 0
         if self.entering_in_collision(current_piece, True, False, False) is True:
-            rewards += self.compute_rewards()
+            rewards += self.compute_rewards(has_moved_left, has_moved_right)
 
         return current_piece, rewards

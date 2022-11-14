@@ -87,13 +87,13 @@ class TetrisWindow(arcade.Window):
 
     def on_update(self, delta_time):
         filename = get_filename(SAVE_FILES, WANTS_NEW_SAVE_FILE)
-        self.__agent.save(filename)
         if not self.__agent.is_over:
             self.__agent.step()
             self.__agent.print_board_if_needed(self.__should_display_board)
             time.sleep(0.001)
         else:
             time.sleep(0.5)
+            self.__agent.save(filename)
             self.__agent.reset()
             self.__iteration += 1
 
