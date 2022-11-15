@@ -1,19 +1,16 @@
 import os
 import pickle
-from random import choice, random
+from random import *
 
 from src.game.tetrominos.piece import Piece
+import numpy as np
+from sklearn.neural_network import MLPRegressor
 
 LEFT = 'L'
 RIGHT = 'R'
 ROTATE = 'U'
 NONE = 'N'
-ACTIONS = {
-    LEFT: 'L',
-    RIGHT: 'R',
-    ROTATE: 'U',
-    NONE: 'N',
-}
+ACTIONS = [LEFT, RIGHT, ROTATE, NONE]
 
 
 def clear_console():
@@ -25,63 +22,45 @@ class Agent:
     def __init__(self, environment, alpha=1, gamma=1, exploration=0, cooling_rate=0.99):
         self.__environment = environment
         self.reset(False)
-        self.__qtable_1 = {}
-        self.__qtable_2 = {}
-        self.__qtable_3 = {}
         self.__alpha = alpha
         self.__gamma = gamma
         self.__exploration = exploration
         self.__cooling_rate = cooling_rate
 
         self.__history = []
-        self.__state_1 = None
-        self.__state_2 = None
-        self.__state_3 = None
+        self.__state = None
         self.__score = 0
+
+        # Initialisation du réseau de neurones
+        # Ici : 1 couche cachée de 2000 neurones
+        self.__mlp = MLPRegressor(hidden_layer_sizes=2000,
+                                  activation='tanh',
+                                  solver='sgd',
+                                  learning_rate_init=alpha,
+                                  max_iter=1,
+                                  warm_start=True)
+        self.__mlp.fit([[0]], [[0] * len(ACTIONS)])
 
         self.is_over = False
 
-    @staticmethod
-    def create_qtable_value_by_state_if_needed(found_qvalue, qtable, state):
-        if found_qvalue is None:
-            qtable[state] = {}
-            for action in ACTIONS.values():
-                if qtable[state].get(action, None) is None:
-                    qtable[state][action] = 0.0
-            return qtable[state]
-        return found_qvalue
-
-    def get_qtable_value_by_state(self, qtable, state):
-        qtable_value_by_state = qtable.get(state, None)
-        return self.create_qtable_value_by_state_if_needed(qtable_value_by_state, qtable, state)
+    def state_to_vector(self, state):
+        x = round(state / pow(10, len(str(abs(state)))), 2)
+        return [x]
 
     def best_action(self):
-        qtable_value_by_state_1 = self.get_qtable_value_by_state(self.__qtable_1, self.__state_1)
-        qtable_value_by_state_2 = self.get_qtable_value_by_state(self.__qtable_2, self.__state_2)
-        qtable_value_by_state_3 = self.get_qtable_value_by_state(self.__qtable_3, self.__state_3)
-
-        if random() < self.__exploration:
+        if uniform(0, 1) < self.__exploration:
             self.__exploration *= self.__cooling_rate
-            return choice(list(ACTIONS.values()))
+            index = randrange(len(ACTIONS))
+        else:
+            qvector = self.__mlp.predict([self.state_to_vector(self.__state)])[0]
+            index = np.argmax(qvector)
 
-        # Get the key of max q values of the two q tables
-        max_q_value_1 = max(qtable_value_by_state_1, key=qtable_value_by_state_1.get)
-        max_q_value_2 = max(qtable_value_by_state_2, key=qtable_value_by_state_2.get)
-        max_q_value_3 = max(qtable_value_by_state_3, key=qtable_value_by_state_3.get)
-
-        max_q_values = {
-            max_q_value_1: qtable_value_by_state_1[max_q_value_1],
-            max_q_value_2: qtable_value_by_state_2[max_q_value_2],
-            max_q_value_3: qtable_value_by_state_3[max_q_value_3],
-        }
-        return max(max_q_values, key=max_q_values.get)
+        return index, ACTIONS[index]
 
     def reset(self, append_score=True):
         if append_score:
             self.__history.append(self.__score)
-        self.__state_1 = None
-        self.__state_2 = None
-        self.__state_3 = None
+        self.__state = None
         self.__score = 0
         self.is_over = False
         self.__environment.reset(self.__environment.height, self.__environment.width)
@@ -108,7 +87,7 @@ class Agent:
     def load(self, filename):
         with open(filename, 'rb') as file:
             try:
-                self.__qtable_1, self.__qtable_2, self.__qtable_3, self.__history = pickle.load(file)
+                self.__mlp, self.__history = pickle.load(file)
             except EOFError:
                 print("/!\\ The file is empty")
             except Exception as e:
@@ -118,7 +97,7 @@ class Agent:
 
     def save(self, filename):
         with open(filename, 'wb') as file:
-            pickle.dump((self.__qtable_1, self.__qtable_2, self.__qtable_3, self.__history), file)
+            pickle.dump((self.__mlp, self.__history), file)
             file.close()
 
     def safe_move_down(self, current_piece: Piece) -> bool:
@@ -126,7 +105,6 @@ class Agent:
         if self.__environment.entering_in_collision(current_piece, True, False, False) is False:
             self.__environment.move_down(current_piece)
             return True
-        # print(f"Has entered in collision at score {self.__score}")
         return False
 
     def print_board_if_needed(self, should_display_board):
@@ -141,21 +119,11 @@ class Agent:
         current_piece_blocks = [(block.x - self.__environment.get_current_piece().current_matrix_position_in_board[0],
                                  block.y - self.__environment.get_current_piece().current_matrix_position_in_board[1])
                                 for block in self.__environment.get_current_piece().blocks]
-        radar_1 = [value for value in self.__environment.states_1.values()]
-        radar_2 = [value for value in self.__environment.states_2.values()]
-        radar_3 = [value for value in self.__environment.states_3.values()]
+        radar = [value for value in self.__environment.states_1.values()]
 
         ys = [block.y for block in self.__environment.get_current_piece().blocks]
 
-        self.__state_1 = hash((tuple(current_piece_blocks), tuple(radar_1), tuple(ys)))
-        self.__state_2 = hash((tuple(current_piece_blocks), tuple(radar_2), tuple(ys)))
-        self.__state_3 = hash((tuple(current_piece_blocks), tuple(radar_3), tuple(ys)))
-
-    def update_qtable(self, action, rewards, qtable, state):
-        # 𝑄(𝑠t,𝑎t) ⟵ 𝑄(𝑠t,𝑎t) + 𝛼[𝑟+1 + 𝛾𝑄(𝑠t+1, 𝑎t+1) − 𝑄(𝑠t,𝑎t)]
-        maxQ = max(qtable[state].values())
-        delta = self.__alpha * (rewards + self.__gamma * maxQ - qtable[state][action])
-        qtable[state][action] += delta
+        self.__state = hash((tuple(current_piece_blocks), tuple(radar), tuple(ys)))
 
     def set_current_piece(self, current_piece):
         self.__environment.set_current_piece(current_piece)
@@ -175,23 +143,26 @@ class Agent:
 
         for movement in range(10):
             self.update_current_states()
-            action = self.best_action()
-            current_piece, rewards = self.__environment.do(action)
+            i_action, action = self.best_action()
+            current_piece, reward = self.__environment.do(action)
+            reward *= 1E-3
 
-            self.update_qtable(action, rewards, self.__qtable_1, self.__state_1)
-            self.update_qtable(action, rewards, self.__qtable_2, self.__state_2)
-            self.update_qtable(action, rewards, self.__qtable_3, self.__state_3)
+            maxQ = max(self.__mlp.predict([self.state_to_vector(self.__state)])[0])
+            expected = reward + self.__gamma * maxQ
 
-            self.__score += rewards
+            qvector = self.__mlp.predict([self.state_to_vector(self.__state)])[0]
+            # qvector : Q(s, a1), Q(s, a2)...
+            # i_action : index de l'action effectivement réalisée
+            qvector[i_action] = expected
+            self.__mlp.fit([self.state_to_vector(self.__state)], [qvector])
+
+            self.__score += reward
+
             self.set_current_piece(current_piece)
             if self.__environment.entering_in_collision(current_piece, True, False, False) is True:
                 break
 
         if self.safe_move_down(self.get_current_piece()) is False:
-            # print("Q-table value : ", self.__qtable[self.__state])
-            self.update_qtable(action, rewards, self.__qtable_1, self.__state_1)
-            self.update_qtable(action, rewards, self.__qtable_2, self.__state_2)
-            self.update_qtable(action, rewards, self.__qtable_3, self.__state_3)
             self.__environment.clear_lines()
 
             self.__environment.next_piece()
