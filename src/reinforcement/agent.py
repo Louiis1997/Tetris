@@ -27,7 +27,6 @@ class Agent:
         self.reset(False)
         self.__qtable_1 = {}
         self.__qtable_2 = {}
-        self.__qtable_3 = {}
         self.__alpha = alpha
         self.__gamma = gamma
         self.__exploration = exploration
@@ -58,7 +57,6 @@ class Agent:
     def best_action(self):
         qtable_value_by_state_1 = self.get_qtable_value_by_state(self.__qtable_1, self.__state_1)
         qtable_value_by_state_2 = self.get_qtable_value_by_state(self.__qtable_2, self.__state_2)
-        qtable_value_by_state_3 = self.get_qtable_value_by_state(self.__qtable_3, self.__state_3)
 
         if random() < self.__exploration:
             self.__exploration *= self.__cooling_rate
@@ -67,12 +65,10 @@ class Agent:
         # Get the key of max q values of the two q tables
         max_q_value_1 = max(qtable_value_by_state_1, key=qtable_value_by_state_1.get)
         max_q_value_2 = max(qtable_value_by_state_2, key=qtable_value_by_state_2.get)
-        max_q_value_3 = max(qtable_value_by_state_3, key=qtable_value_by_state_3.get)
 
         max_q_values = {
             max_q_value_1: qtable_value_by_state_1[max_q_value_1],
             max_q_value_2: qtable_value_by_state_2[max_q_value_2],
-            max_q_value_3: qtable_value_by_state_3[max_q_value_3],
         }
         return max(max_q_values, key=max_q_values.get)
 
@@ -81,7 +77,6 @@ class Agent:
             self.__history.append(self.__score)
         self.__state_1 = None
         self.__state_2 = None
-        self.__state_3 = None
         self.__score = 0
         self.is_over = False
         self.__environment.reset(self.__environment.height, self.__environment.width)
@@ -108,7 +103,7 @@ class Agent:
     def load(self, filename):
         with open(filename, 'rb') as file:
             try:
-                self.__qtable_1, self.__qtable_2, self.__qtable_3, self.__history = pickle.load(file)
+                self.__qtable_1, self.__qtable_2, self.__history = pickle.load(file)
             except EOFError:
                 print("/!\\ The file is empty")
             except Exception as e:
@@ -118,7 +113,7 @@ class Agent:
 
     def save(self, filename):
         with open(filename, 'wb') as file:
-            pickle.dump((self.__qtable_1, self.__qtable_2, self.__qtable_3, self.__history), file)
+            pickle.dump((self.__qtable_1, self.__qtable_2, self.__history), file)
             file.close()
 
     def safe_move_down(self, current_piece: Piece) -> bool:
@@ -135,20 +130,18 @@ class Agent:
     def update_current_states(self):
         # The current state is the hash of :
         #   - The current piece (piece and rotation)
-        #   - The radar of the piece (witch are 3 and are 3height x 3width)
+        #   - The radar of the piece (which are 2 and are 3height x 4width)
         #   - The y position of the current piece on the board
         current_piece_blocks = [(block.x - self.__environment.get_current_piece().current_matrix_position_in_board[0],
                                  block.y - self.__environment.get_current_piece().current_matrix_position_in_board[1])
                                 for block in self.__environment.get_current_piece().blocks]
         radar_1 = [value for value in self.__environment.states_1.values()]
         radar_2 = [value for value in self.__environment.states_2.values()]
-        radar_3 = [value for value in self.__environment.states_3.values()]
 
         ys = [block.y for block in self.__environment.get_current_piece().blocks]
 
         self.__state_1 = hash((tuple(current_piece_blocks), tuple(radar_1), tuple(ys)))
         self.__state_2 = hash((tuple(current_piece_blocks), tuple(radar_2), tuple(ys)))
-        self.__state_3 = hash((tuple(current_piece_blocks), tuple(radar_3), tuple(ys)))
 
     def update_qtable(self, action, rewards, qtable, state):
         # 𝑄(𝑠t,𝑎t) ⟵ 𝑄(𝑠t,𝑎t) + 𝛼[𝑟+1 + 𝛾𝑄(𝑠t+1, 𝑎t+1) − 𝑄(𝑠t,𝑎t)]
@@ -174,7 +167,6 @@ class Agent:
 
             self.update_qtable(action, rewards, self.__qtable_1, self.__state_1)
             self.update_qtable(action, rewards, self.__qtable_2, self.__state_2)
-            self.update_qtable(action, rewards, self.__qtable_3, self.__state_3)
 
             self.__score += rewards
             self.set_current_piece(current_piece)
@@ -185,7 +177,6 @@ class Agent:
             # print("Q-table value : ", self.__qtable[self.__state])
             self.update_qtable(action, rewards, self.__qtable_1, self.__state_1)
             self.update_qtable(action, rewards, self.__qtable_2, self.__state_2)
-            self.update_qtable(action, rewards, self.__qtable_3, self.__state_3)
             self.__environment.clear_lines()
 
             self.__environment.next_piece()
