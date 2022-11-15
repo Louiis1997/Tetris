@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import arcade
@@ -14,9 +15,10 @@ COLUMN_COUNT = 10
 PIECES = TetrominosFactory.create_tetrominos()
 
 if __name__ == '__main__':
-    iteration_wanted = 5
+    iteration_wanted = 1
     wants_graphic_interface = False
     wants_to_display_board = False
+    wants_plt_graph = False
 
     env = TetrisEnvironment(LINE_COUNT, COLUMN_COUNT, PIECES)
     agent = Agent(env, alpha=0.5, gamma=0.9, exploration=0.1, cooling_rate=0.99)
@@ -26,8 +28,9 @@ if __name__ == '__main__':
     if os.listdir(SAVE_FOLDER) != 0 and os.path.exists(filename):
         print('Load file.')
         agent.load(filename)
-        plt.plot(agent.history)
-        plt.show()
+        if wants_plt_graph:
+            plt.plot(agent.history)
+            plt.show()
 
     if wants_graphic_interface:
         window = TetrisWindow(agent, wants_to_display_board)
@@ -36,14 +39,15 @@ if __name__ == '__main__':
 
     else:
         iteration = 0
-        agent.reset(False)
 
-        for i in range(iteration_wanted):
+        # for i in range(iteration_wanted):
+        # While local datetime is not > 2022-11-15_08-30-00
+        while datetime.now().strftime("%Y-%m-%d_%H-%M-%S") < "2022-11-15_01-56-50":
             while not agent.is_over:
                 agent.step()
                 agent.print_board_if_needed(wants_to_display_board)
             iteration += 1
-            clear_console()
             agent.save(filename)
+            clear_console()
+            print(f"#{iteration:04d} Score : {agent.score:.2f} T°C : {agent.exploration * 100:.2f}")
             agent.reset()
-            print(f"#{iteration:04d} Score : {agent.score:.2f} T°C : {agent.exploration:.2f}")

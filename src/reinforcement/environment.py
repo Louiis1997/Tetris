@@ -17,17 +17,18 @@ class TetrisEnvironment:
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
         self.__radar_states_1 = {}
         self.__radar_states_2 = {}
+        self.__radar_states_3 = {}
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
         self.__current_piece = None
         self.__current_rotation = None
         self.__reward_piece_height = 1
-        self.__reward_clear_line = 500
-        self.__reward_bumpiness = -10
-        self.__reward_new_holes = -50
-        self.__reward_cannot_move_left = -10
-        self.__reward_cannot_move_right = -10
+        self.__reward_clear_line = 10000
+        self.__reward_bumpiness = -5
+        self.__reward_new_holes = -30
+        self.__reward_cannot_move_left = -20
+        self.__reward_cannot_move_right = -20
 
     def get_lowest_x_for_states_by_current_piece(self):
         x = 0
@@ -36,6 +37,15 @@ class TetrisEnvironment:
                 x = block.x
         return x
 
+    def fill_radar_states_with_board(self, radar_states, current_x, radar_y_start, radar_y_end):
+        """Fill the radar states with the current board"""
+        """Update the radar with the current board"""
+        for y in range(radar_y_start, radar_y_end):
+            if y < 0 or y >= len(self.__board[current_x]):
+                radar_states[current_x, y] = WALL
+            else:
+                radar_states[current_x, y] = WALL if self.__board[current_x][y] != EMPTY_BLOCK else EMPTY_BLOCK
+
     def update_states_for_current_board(self, current_piece=None):
         """Update the radar for the current board"""
         if current_piece is None:
@@ -43,34 +53,31 @@ class TetrisEnvironment:
 
         # Add next 3 lines (without edges) to the states
         imaginary_matrix_size = 4
-        radar_width = 4
+        radar_count = 3
+        radar_width = 3
+        radar_height = 3
 
-        difference = math.floor(radar_width / 2)
-        left_overflow = radar_width - difference
+        left_overflow = radar_width
 
         states_first_line_x_coordinate = self.get_lowest_x_for_states_by_current_piece()
-        for x in range(states_first_line_x_coordinate, states_first_line_x_coordinate + 3):
-            # 10 * 28 * 2^(3*6)
+        for x in range(states_first_line_x_coordinate, states_first_line_x_coordinate + radar_height):
+            # 10 * 28 * 2^(3*3) * 3
             if x > len(self.__board):
                 self.__radar_states_1[x] = [WALL for _ in range(radar_width)]
                 self.__radar_states_2[x] = [WALL for _ in range(radar_width)]
+                self.__radar_states_3[x] = [WALL for _ in range(radar_width)]
+                continue
 
             radar_1_y_start = current_piece.current_matrix_position_in_board[1] - left_overflow
             radar_1_y_end = radar_1_y_start + (radar_width - 1)
             radar_2_y_start = radar_1_y_end + 1
             radar_2_y_end = radar_2_y_start + (radar_width - 1)
+            radar_3_y_start = radar_2_y_end + 1
+            radar_3_y_end = radar_3_y_start + (radar_width - 1)
 
-            for y in range(radar_1_y_start, radar_1_y_end):
-                if y < 0 or y >= len(self.__board[x]):
-                    self.__radar_states_1[x, y] = WALL
-                else:
-                    self.__radar_states_1[x, y] = WALL if self.__board[x][y] != EMPTY_BLOCK else EMPTY_BLOCK
-
-            for y in range(radar_2_y_start, radar_2_y_end):
-                if y < 0 or y >= len(self.__board[x]):
-                    self.__radar_states_2[x, y] = WALL
-                else:
-                    self.__radar_states_2[x, y] = WALL if self.__board[x][y] != EMPTY_BLOCK else EMPTY_BLOCK
+            self.fill_radar_states_with_board(self.__radar_states_1, x, radar_1_y_start, radar_1_y_end)
+            self.fill_radar_states_with_board(self.__radar_states_2, x, radar_2_y_start, radar_2_y_end)
+            self.fill_radar_states_with_board(self.__radar_states_3, x, radar_3_y_start, radar_3_y_end)
 
     def reset(self, height, width):
         """Resets the game and returns the current state"""
@@ -95,6 +102,7 @@ class TetrisEnvironment:
 
         self.__radar_states_1 = {}
         self.__radar_states_2 = {}
+        self.__radar_states_3 = {}
         self.update_states_for_current_board()
 
     def new_round(self):
@@ -121,6 +129,10 @@ class TetrisEnvironment:
     @property
     def states_2(self):
         return self.__radar_states_2
+
+    @property
+    def states_3(self):
+        return self.__radar_states_3
 
     @property
     def height(self):
