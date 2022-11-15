@@ -16,19 +16,17 @@ class TetrisEnvironment:
         self.__pieces = pieces
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
         self.__radar_states_1 = {}
-        self.__radar_states_2 = {}
-        self.__radar_states_3 = {}
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
         self.__current_piece = None
         self.__current_rotation = None
+        self.__clear_line_reward_weight = 200
+        self.__avg_column_heights_reward_weight = -5
         self.__reward_piece_height = 1
-        self.__reward_clear_line = 10000
-        self.__reward_bumpiness = -5
-        self.__reward_new_holes = -30
-        self.__reward_cannot_move_left = -20
-        self.__reward_cannot_move_right = -20
+        self.__bumpiness_reward_weight = -1
+        self.__quadratic_bumpiness_reward_weight = 2
+        self.__holes_reward_weight = -16
 
     def get_lowest_x_for_states_by_current_piece(self):
         x = 0
@@ -51,9 +49,6 @@ class TetrisEnvironment:
         if current_piece is None:
             return
 
-        # Add next 3 lines (without edges) to the states
-        imaginary_matrix_size = 4
-        radar_count = 3
         radar_width = 3
         radar_height = 3
 
@@ -64,20 +59,12 @@ class TetrisEnvironment:
             # 10 * 28 * 2^(3*3) * 3
             if x > len(self.__board):
                 self.__radar_states_1[x] = [WALL for _ in range(radar_width)]
-                self.__radar_states_2[x] = [WALL for _ in range(radar_width)]
-                self.__radar_states_3[x] = [WALL for _ in range(radar_width)]
                 continue
 
             radar_1_y_start = current_piece.current_matrix_position_in_board[1] - left_overflow
             radar_1_y_end = radar_1_y_start + (radar_width - 1)
-            radar_2_y_start = radar_1_y_end + 1
-            radar_2_y_end = radar_2_y_start + (radar_width - 1)
-            radar_3_y_start = radar_2_y_end + 1
-            radar_3_y_end = radar_3_y_start + (radar_width - 1)
 
             self.fill_radar_states_with_board(self.__radar_states_1, x, radar_1_y_start, radar_1_y_end)
-            self.fill_radar_states_with_board(self.__radar_states_2, x, radar_2_y_start, radar_2_y_end)
-            self.fill_radar_states_with_board(self.__radar_states_3, x, radar_3_y_start, radar_3_y_end)
 
     def reset(self, height, width):
         """Resets the game and returns the current state"""
@@ -101,8 +88,6 @@ class TetrisEnvironment:
         self.new_round()
 
         self.__radar_states_1 = {}
-        self.__radar_states_2 = {}
-        self.__radar_states_3 = {}
         self.update_states_for_current_board()
 
     def new_round(self):
@@ -125,14 +110,6 @@ class TetrisEnvironment:
     @property
     def states_1(self):
         return self.__radar_states_1
-
-    @property
-    def states_2(self):
-        return self.__radar_states_2
-
-    @property
-    def states_3(self):
-        return self.__radar_states_3
 
     @property
     def height(self):
@@ -307,13 +284,23 @@ class TetrisEnvironment:
         return current_piece
 
     def compute_line_cleared_reward(self):
-        rewards = 0
+        line_cleared = 0
         # The more lines cleared, the more reward
-        for row in self.__board:
+        for index, row in enumerate(self.__board):
             if all(block != EMPTY_BLOCK for block in row):
-                rewards += self.__reward_clear_line
+                line_cleared += 1 * (index + 1)  # To round index 19 to 20 for example
         # The height of the current piece reward
-        return rewards
+        return line_cleared * self.__clear_line_reward_weight
+
+    def compute_avg_column_heights_reward(self):
+        column_heights = 0
+        for column in range(self.width):
+            for row in range(self.height):
+                if self.__board[row][column] != EMPTY_BLOCK:
+                    column_heights += self.height - row
+                    break
+        avg_column_heights = column_heights / self.width
+        return avg_column_heights * self.__avg_column_heights_reward_weight
 
     def get_column_height(self, col, board):
         """Returns the height of the given column"""
@@ -349,18 +336,13 @@ class TetrisEnvironment:
         return total_bumpiness
 
     def compute_bumpiness_reward(self):
-        previous_bumpiness = self.get_previous_bumpiness()
         bumpiness = self.get_current_bumpiness()
-        return self.__reward_bumpiness * (bumpiness - previous_bumpiness)
+        return bumpiness * self.__bumpiness_reward_weight
 
     def compute_piece_height_reward(self):
         return math.floor(
             sum([(block.x - self.height) for block in
                  self.get_current_piece().blocks]) * self.__reward_piece_height)
-
-    def get_old_holes_count(self):
-        old_board = self.get_board_without_current_piece(self.get_current_piece())
-        return self.get_holes_count(old_board)
 
     def get_holes_count(self, board):
         """Returns the number of holes in the board (meaning empty spaces that are underneath at least one block)"""
@@ -378,23 +360,10 @@ class TetrisEnvironment:
 
         return holes
 
-    def get_new_holes_count(self):
-        old_holes_count = self.get_old_holes_count()
-        current_holes_count = self.get_holes_count(self.__board)
-        return current_holes_count - old_holes_count
-
     def compute_holes_reward(self):
-        return self.__reward_new_holes * self.get_new_holes_count()
+        return self.__holes_reward_weight * self.get_holes_count(self.__board)
 
-    def compute_cannot_make_lateral_reward(self, has_moved_left, has_moved_right):
-        reward = 0
-        if has_moved_left is False:
-            reward += self.__reward_cannot_move_left
-        if has_moved_right is False:
-            reward += self.__reward_cannot_move_right
-        return reward
-
-    def compute_rewards(self, has_moved_left, has_moved_right):
+    def compute_rewards(self):
         rewards = 0
 
         line_cleared_reward = self.compute_line_cleared_reward()
@@ -405,6 +374,10 @@ class TetrisEnvironment:
         # print("piece_height_reward: ", piece_height_reward)
         rewards += piece_height_reward
 
+        avg_column_heights_reward = self.compute_avg_column_heights_reward()
+        # print("avg_column_heights_reward: ", avg_column_heights_reward)
+        rewards += avg_column_heights_reward
+
         holes_reward = self.compute_holes_reward()
         # print("holes_reward: ", holes_reward)
         rewards += holes_reward
@@ -413,19 +386,14 @@ class TetrisEnvironment:
         # print("bumpiness_reward: ", bumpiness_reward)
         rewards += bumpiness_reward
 
-        cannot_make_lateral_move_reward = self.compute_cannot_make_lateral_reward(has_moved_left, has_moved_right)
-        rewards += cannot_make_lateral_move_reward
-
         return rewards
 
     def do(self, action: ACTIONS):
         current_piece = self.get_current_piece()
-        has_moved_left = False
-        has_moved_right = False
         if action == LEFT:
-            has_moved_left = self.safe_move_left(current_piece)
+            self.safe_move_left(current_piece)
         elif action == RIGHT:
-            has_moved_right = self.safe_move_right(current_piece)
+            self.safe_move_right(current_piece)
         elif action == ROTATE:
             current_piece = self.safe_rotate(current_piece)
         elif action == NONE:
@@ -433,6 +401,6 @@ class TetrisEnvironment:
 
         rewards = 0
         if self.entering_in_collision(current_piece, True, False, False) is True:
-            rewards += self.compute_rewards(has_moved_left, has_moved_right)
+            rewards += self.compute_rewards()
 
         return current_piece, rewards

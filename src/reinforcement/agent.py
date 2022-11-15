@@ -33,9 +33,9 @@ class Agent:
 
         # Initialisation du réseau de neurones
         # Ici : 1 couche cachée de 2000 neurones
-        self.__mlp = MLPRegressor(hidden_layer_sizes=2000,
+        self.__mlp = MLPRegressor(hidden_layer_sizes=(1000, 500),
                                   activation='tanh',
-                                  solver='sgd',
+                                  solver='adam',
                                   learning_rate_init=alpha,
                                   max_iter=1,
                                   warm_start=True)
@@ -44,7 +44,7 @@ class Agent:
         self.is_over = False
 
     def state_to_vector(self, state):
-        x = round(state / pow(10, len(str(abs(state)))), 2)
+        x = state / pow(10, len(str(abs(state))))
         return [x]
 
     def best_action(self):
@@ -138,14 +138,12 @@ class Agent:
         # OR
         # TODO      -> Implement Neural Network
         # TODO      -> BEST OPTION -> BOTH
-        action = None
-        rewards = 0
 
         for movement in range(10):
             self.update_current_states()
             i_action, action = self.best_action()
             current_piece, reward = self.__environment.do(action)
-            reward *= 1E-3
+            reward *= 1E-2
 
             maxQ = max(self.__mlp.predict([self.state_to_vector(self.__state)])[0])
             expected = reward + self.__gamma * maxQ
