@@ -165,11 +165,6 @@ class Agent:
 
     def step(self):
         """Do a step"""
-        # TODO -> Implement reinforcement learning
-        # TODO      -> Implement Q-learning
-        # OR
-        # TODO      -> Implement Neural Network
-        # TODO      -> BEST OPTION -> BOTH
         action = None
         rewards = 0
 
