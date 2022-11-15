@@ -16,8 +16,6 @@ class TetrisEnvironment:
         self.__pieces = pieces
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
         self.__radar_states_1 = {}
-        self.__radar_states_2 = {}
-        self.__radar_states_3 = {}
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
@@ -49,30 +47,25 @@ class TetrisEnvironment:
         if current_piece is None:
             return
 
-        radar_width = 3
+        imaginary_matrix = 4
+        radar_width = 6
         radar_height = 3
 
-        left_overflow = radar_width
+        difference = math.floor(imaginary_matrix / 2)
+        left_overflow = math.floor(radar_width / 2) - difference
 
         states_first_line_x_coordinate = self.get_lowest_x_for_states_by_current_piece()
         for x in range(states_first_line_x_coordinate, states_first_line_x_coordinate + radar_height):
-            # 10 * 28 * 2^(3*3) * 3
+            # 10 * 28 * 2^(3*6)
             if x > len(self.__board):
                 self.__radar_states_1[x] = [WALL for _ in range(radar_width)]
-                self.__radar_states_2[x] = [WALL for _ in range(radar_width)]
-                self.__radar_states_3[x] = [WALL for _ in range(radar_width)]
                 continue
+
 
             radar_1_y_start = current_piece.current_matrix_position_in_board[1] - left_overflow
             radar_1_y_end = radar_1_y_start + (radar_width - 1)
-            radar_2_y_start = radar_1_y_end + 1
-            radar_2_y_end = radar_2_y_start + (radar_width - 1)
-            radar_3_y_start = radar_2_y_end + 1
-            radar_3_y_end = radar_3_y_start + (radar_width - 1)
 
             self.fill_radar_states_with_board(self.__radar_states_1, x, radar_1_y_start, radar_1_y_end)
-            self.fill_radar_states_with_board(self.__radar_states_2, x, radar_2_y_start, radar_2_y_end)
-            self.fill_radar_states_with_board(self.__radar_states_3, x, radar_3_y_start, radar_3_y_end)
 
     def reset(self, height, width):
         """Resets the game and returns the current state"""
@@ -88,8 +81,6 @@ class TetrisEnvironment:
         self.new_round()
 
         self.__radar_states_1 = {}
-        self.__radar_states_2 = {}
-        self.__radar_states_3 = {}
         self.update_states_for_current_board()
 
     def new_round(self):
@@ -112,14 +103,6 @@ class TetrisEnvironment:
     @property
     def states_1(self):
         return self.__radar_states_1
-
-    @property
-    def states_2(self):
-        return self.__radar_states_2
-
-    @property
-    def states_3(self):
-        return self.__radar_states_3
 
     @property
     def height(self):

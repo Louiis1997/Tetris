@@ -13,7 +13,7 @@ SAVE_FILES = SAVE_FOLDER + '*'
 
 SPRITE_SIZE = 40
 
-WANTS_NEW_SAVE_FILE = False
+WANTS_NEW_SAVE_FILE = True
 
 
 def most_recent_save(files_path):

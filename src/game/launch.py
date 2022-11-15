@@ -41,7 +41,7 @@ if __name__ == '__main__':
         iteration = 0
 
         # for i in range(iteration_wanted):
-        while datetime.now().strftime("%Y-%m-%d_%H-%M-%S") < "2022-11-15_01-56-50":
+        while datetime.now().strftime("%Y-%m-%d_%H-%M-%S") < "2022-11-15_23-48-10":
             while not agent.is_over:
                 agent.step()
                 agent.print_board_if_needed(wants_to_display_board)
