@@ -34,7 +34,7 @@ def get_filename(files_path, is_new_save_file):
 
 
 class TetrisWindow(arcade.Window):
-    def __init__(self, agent, should_display_board=False):
+    def __init__(self, agent, should_display_board=False, want_to_save_training_in_new_file=False):
         super().__init__(agent.environment.width * (SPRITE_SIZE * 1.25), agent.environment.height * (SPRITE_SIZE * 1.1),
                          'Tetris')
 
@@ -43,6 +43,7 @@ class TetrisWindow(arcade.Window):
 
         self.__board = None
         self.__should_display_board = should_display_board
+        self.__filename = get_filename(SAVE_FILES, want_to_save_training_in_new_file)
 
         self.set_update_rate(1 / 10)
 
@@ -83,17 +84,14 @@ class TetrisWindow(arcade.Window):
             f"#{self.__iteration:04d} Score : {self.__agent.score:.2f} T°C : {self.__agent.exploration * 100:.2f}",
             10, 10, arcade.csscolor.WHITE, 20)
 
-    FILENAME = get_filename(SAVE_FILES, WANTS_NEW_SAVE_FILE)
-
     def on_update(self, delta_time):
-        filename = get_filename(SAVE_FILES, WANTS_NEW_SAVE_FILE)
         if not self.__agent.is_over:
             self.__agent.step()
             self.__agent.print_board_if_needed(self.__should_display_board)
             time.sleep(0.001)
         else:
             time.sleep(0.5)
-            self.__agent.save(filename)
+            self.__agent.save(self.__filename)
             self.__agent.reset()
             self.__iteration += 1
 

@@ -33,7 +33,7 @@ if __name__ == '__main__':
             plt.show()
 
     if wants_graphic_interface:
-        window = TetrisWindow(agent, wants_to_display_board)
+        window = TetrisWindow(agent, wants_to_display_board, WANTS_NEW_SAVE_FILE)
         window.setup()
         arcade.run()
 
