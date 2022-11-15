@@ -24,11 +24,9 @@ class TetrisEnvironment:
         self.__current_piece = None
         self.__current_rotation = None
         self.__reward_piece_height = 1
-        self.__reward_clear_line = 10000
+        self.__reward_clear_line = 5000
         self.__reward_bumpiness = -5
         self.__reward_new_holes = -30
-        self.__reward_cannot_move_left = -20
-        self.__reward_cannot_move_right = -20
 
     def get_lowest_x_for_states_by_current_piece(self):
         x = 0
@@ -51,9 +49,6 @@ class TetrisEnvironment:
         if current_piece is None:
             return
 
-        # Add next 3 lines (without edges) to the states
-        imaginary_matrix_size = 4
-        radar_count = 3
         radar_width = 3
         radar_height = 3
 
@@ -84,14 +79,6 @@ class TetrisEnvironment:
         self.__height = height
         self.__width = width
         self.__board = [[EMPTY_BLOCK for _ in range(width)] for _ in range(height)]
-        # Fill the board with pieces
-        # for i in range(5, self.__height):
-        #     for j in range(0, self.__width):
-        #         rand = random.randint(0, 3)
-        #         if rand == 1 or rand == 2:
-        #             self.__board[i][j] = random.randint(0, 7)
-        #         else:
-        #             self.__board[i][j] = 0
 
         self.__current_bag_piece_index = list()
         self.__current_piece_index = None
@@ -386,15 +373,7 @@ class TetrisEnvironment:
     def compute_holes_reward(self):
         return self.__reward_new_holes * self.get_new_holes_count()
 
-    def compute_cannot_make_lateral_reward(self, has_moved_left, has_moved_right):
-        reward = 0
-        if has_moved_left is False:
-            reward += self.__reward_cannot_move_left
-        if has_moved_right is False:
-            reward += self.__reward_cannot_move_right
-        return reward
-
-    def compute_rewards(self, has_moved_left, has_moved_right):
+    def compute_rewards(self):
         rewards = 0
 
         line_cleared_reward = self.compute_line_cleared_reward()
@@ -413,19 +392,14 @@ class TetrisEnvironment:
         # print("bumpiness_reward: ", bumpiness_reward)
         rewards += bumpiness_reward
 
-        cannot_make_lateral_move_reward = self.compute_cannot_make_lateral_reward(has_moved_left, has_moved_right)
-        rewards += cannot_make_lateral_move_reward
-
         return rewards
 
     def do(self, action: ACTIONS):
         current_piece = self.get_current_piece()
-        has_moved_left = False
-        has_moved_right = False
         if action == LEFT:
-            has_moved_left = self.safe_move_left(current_piece)
+            self.safe_move_left(current_piece)
         elif action == RIGHT:
-            has_moved_right = self.safe_move_right(current_piece)
+            self.safe_move_right(current_piece)
         elif action == ROTATE:
             current_piece = self.safe_rotate(current_piece)
         elif action == NONE:
@@ -433,6 +407,6 @@ class TetrisEnvironment:
 
         rewards = 0
         if self.entering_in_collision(current_piece, True, False, False) is True:
-            rewards += self.compute_rewards(has_moved_left, has_moved_right)
+            rewards += self.compute_rewards()
 
         return current_piece, rewards

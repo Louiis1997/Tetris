@@ -126,7 +126,6 @@ class Agent:
         if self.__environment.entering_in_collision(current_piece, True, False, False) is False:
             self.__environment.move_down(current_piece)
             return True
-        # print(f"Has entered in collision at score {self.__score}")
         return False
 
     def print_board_if_needed(self, should_display_board):
@@ -136,7 +135,7 @@ class Agent:
     def update_current_states(self):
         # The current state is the hash of :
         #   - The current piece (piece and rotation)
-        #   - The radar of the piece (witch are 2 and are 3height x 4width)
+        #   - The radar of the piece (witch are 3 and are 3height x 3width)
         #   - The y position of the current piece on the board
         current_piece_blocks = [(block.x - self.__environment.get_current_piece().current_matrix_position_in_board[0],
                                  block.y - self.__environment.get_current_piece().current_matrix_position_in_board[1])
@@ -165,11 +164,6 @@ class Agent:
 
     def step(self):
         """Do a step"""
-        # TODO -> Implement reinforcement learning
-        # TODO      -> Implement Q-learning
-        # OR
-        # TODO      -> Implement Neural Network
-        # TODO      -> BEST OPTION -> BOTH
         action = None
         rewards = 0
 

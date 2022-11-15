@@ -41,7 +41,6 @@ if __name__ == '__main__':
         iteration = 0
 
         # for i in range(iteration_wanted):
-        # While local datetime is not > 2022-11-15_08-30-00
         while datetime.now().strftime("%Y-%m-%d_%H-%M-%S") < "2022-11-15_01-56-50":
             while not agent.is_over:
                 agent.step()
