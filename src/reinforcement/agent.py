@@ -33,7 +33,7 @@ class Agent:
 
         # Initialisation du réseau de neurones
         # Ici : 1 couche cachée de 2000 neurones
-        self.__mlp = MLPRegressor(hidden_layer_sizes=(1000, 500),
+        self.__mlp = MLPRegressor(hidden_layer_sizes=(2000, 1000),
                                   activation='tanh',
                                   solver='adam',
                                   learning_rate_init=alpha,
@@ -139,11 +139,10 @@ class Agent:
         # TODO      -> Implement Neural Network
         # TODO      -> BEST OPTION -> BOTH
 
-        for movement in range(10):
+        for movement in range(3):
             self.update_current_states()
             i_action, action = self.best_action()
             current_piece, reward = self.__environment.do(action)
-            reward *= 1E-2
 
             maxQ = max(self.__mlp.predict([self.state_to_vector(self.__state)])[0])
             expected = reward + self.__gamma * maxQ
@@ -152,8 +151,8 @@ class Agent:
             # qvector : Q(s, a1), Q(s, a2)...
             # i_action : index de l'action effectivement réalisée
             qvector[i_action] = expected
-            self.__mlp.fit([self.state_to_vector(self.__state)], [qvector])
 
+            self.__mlp.fit([self.state_to_vector(self.__state)], [qvector])
             self.__score += reward
 
             self.set_current_piece(current_piece)
@@ -169,5 +168,7 @@ class Agent:
             if self.__environment.entering_in_collision(self.get_current_piece(), down=False, left=False, right=False,
                                                         without_current_piece=False) is True:
                 self.is_over = True
+                print("nb of PIECE: ", self.__environment.get_number_of_blocks_on_the_board()/4)
+                print("FINAL SCORE: ", self.__score)
                 return
             self.__environment.place_piece_in_board(self.get_current_piece())
