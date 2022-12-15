@@ -168,7 +168,5 @@ class Agent:
             if self.__environment.entering_in_collision(self.get_current_piece(), down=False, left=False, right=False,
                                                         without_current_piece=False) is True:
                 self.is_over = True
-                print("nb of PIECE: ", self.__environment.get_number_of_blocks_on_the_board()/4)
-                print("FINAL SCORE: ", self.__score)
                 return
             self.__environment.place_piece_in_board(self.get_current_piece())

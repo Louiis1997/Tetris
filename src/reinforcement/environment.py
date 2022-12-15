@@ -391,7 +391,7 @@ class TetrisEnvironment:
         # print("bumpiness_reward: ", bumpiness_reward)
         rewards += bumpiness_reward
 
-        return rewards / (self.get_number_of_blocks_on_the_board() / 4)
+        return rewards
 
     def do(self, action: ACTIONS):
         current_piece = self.get_current_piece()

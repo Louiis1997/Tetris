@@ -9,13 +9,13 @@ class TetrominosFactory:
     @staticmethod
     def create_tetrominos():
         return {
-            1: TetrominosFactory.create_I_tetrominos(1),
-            2: TetrominosFactory.create_T_tetrominos(2),
-            3: TetrominosFactory.create_L_tetrominos(3),
-            4: TetrominosFactory.create_J_tetrominos(4),
-            5: TetrominosFactory.create_Z_tetrominos(5),
-            6: TetrominosFactory.create_S_tetrominos(6),
-            7: TetrominosFactory.create_O_tetrominos(7),
+            # 1: TetrominosFactory.create_I_tetrominos(1),
+            # 2: TetrominosFactory.create_T_tetrominos(2),
+            # 3: TetrominosFactory.create_L_tetrominos(3),
+            # 4: TetrominosFactory.create_J_tetrominos(4),
+            # 5: TetrominosFactory.create_Z_tetrominos(5),
+            # 6: TetrominosFactory.create_S_tetrominos(6),
+            1: TetrominosFactory.create_O_tetrominos(1),
         }
 
     @staticmethod
